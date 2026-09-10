@@ -1,0 +1,6 @@
+{
+  "name": "Invexa",
+  "description": "PWA para gerenciamento de inventários em tempo real, centralizando dados de coletores de dados com suporte a auditoria, dupla contagem (Compara) e relatórios personalizados.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}

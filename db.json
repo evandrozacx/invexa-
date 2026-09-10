@@ -1,0 +1,1271 @@
+{
+  "companies": [
+    {
+      "id": "ppbrasil",
+      "cnpj": "12.345.678/0001-90",
+      "razaoSocial": "PPBrasil Inventários Ltda",
+      "nomeFantasia": "PPBRASIL",
+      "parcerias": [
+        "mesquita"
+      ]
+    },
+    {
+      "id": "mesquita",
+      "cnpj": "98.765.432/0001-21",
+      "razaoSocial": "Mesquita Soluções em Logística",
+      "nomeFantasia": "MESQUITA",
+      "parcerias": [
+        "ppbrasil",
+        "emds"
+      ]
+    },
+    {
+      "id": "emds",
+      "cnpj": "45.678.901/0001-44",
+      "razaoSocial": "EMDS Logística e Inventários",
+      "nomeFantasia": "EMDS",
+      "parcerias": [
+        "mesquita"
+      ]
+    }
+  ],
+  "operators": [
+    {
+      "id": "op1",
+      "cpf": "111.111.111-11",
+      "nomeCompleto": "INGRID SANTOS",
+      "dataNascimento": "1995-05-12",
+      "senhaPreenchedores": "111111",
+      "companyId": "ppbrasil"
+    },
+    {
+      "id": "op2",
+      "cpf": "222.222.222-22",
+      "nomeCompleto": "MICHEL GOMES",
+      "dataNascimento": "1991-09-24",
+      "senhaPreenchedores": "222222",
+      "companyId": "ppbrasil"
+    },
+    {
+      "id": "op3",
+      "cpf": "333.333.333-33",
+      "nomeCompleto": "JOÃO HENRIQUE",
+      "dataNascimento": "1988-11-03",
+      "senhaPreenchedores": "333333",
+      "companyId": "ppbrasil"
+    },
+    {
+      "id": "op4",
+      "cpf": "444.444.444-44",
+      "nomeCompleto": "ESTHER RODRIGUES",
+      "dataNascimento": "1994-02-18",
+      "senhaPreenchedores": "444444",
+      "companyId": "ppbrasil"
+    },
+    {
+      "id": "op5",
+      "cpf": "555.555.555-55",
+      "nomeCompleto": "MARCELO PEREIRA",
+      "dataNascimento": "1990-07-26",
+      "senhaPreenchedores": "555555",
+      "companyId": "ppbrasil"
+    },
+    {
+      "cpf": "000.111.222-33",
+      "nomeCompleto": "TEST OPERATOR HIERARCHY",
+      "dataNascimento": "1990-01-01",
+      "companyId": "c1",
+      "hierarquia": "Admin",
+      "id": "op_1788233464852",
+      "senhaPreenchedores": "122233"
+    }
+  ],
+  "devices": [
+    {
+      "id": "dev1",
+      "nomeFantasia": "PPBRASIL-001",
+      "companyId": "ppbrasil",
+      "lastActive": "2026-08-06T01:37:13.338Z"
+    },
+    {
+      "id": "dev2",
+      "nomeFantasia": "PPBRASIL-002",
+      "companyId": "ppbrasil",
+      "lastActive": "2026-08-06T01:37:13.338Z"
+    },
+    {
+      "id": "dev3",
+      "nomeFantasia": "MESQUITA-001",
+      "companyId": "mesquita",
+      "lastActive": "2026-08-06T01:37:13.338Z"
+    }
+  ],
+  "inventories": [
+    {
+      "id": "inv1",
+      "nome": "DROGASMIL FILIAL 80",
+      "filial": "MESQUITA/RJ",
+      "dataExecucao": "2026-07-20",
+      "dataEdicao": "2026-08-06T01:37:13.338Z",
+      "status": "EM_ANDAMENTO",
+      "tipoContagem": "NORMAL_FECHADA_COM_MULT",
+      "coletaPallets": "SIMPLIFICADO",
+      "permissaoColeta": "SOMENTE_CARREGADOS",
+      "compara": true,
+      "coordenador": "SICRANO DA SILVA",
+      "gerente": "FULANO DE TAL",
+      "inicioEstoque": "08:00",
+      "terminoEstoque": "12:00",
+      "inicioLoja": "13:00",
+      "terminoLoja": "18:00",
+      "inicioDivergencia": "18:30",
+      "terminoDivergencia": "20:00",
+      "products": [
+        {
+          "ean": "7891317004347",
+          "sap": "001965",
+          "descricao": "G PREDNISOLONA 11MG GTS 20ML",
+          "estoque": 15,
+          "precoCusto": 4.5,
+          "departamento": "MEDICAMENTO"
+        },
+        {
+          "ean": "7891317010362",
+          "sap": "001966",
+          "descricao": "G FUROATO MOMETASONA 50MCG SPR",
+          "estoque": 10,
+          "precoCusto": 12.8,
+          "departamento": "MEDICAMENTO"
+        },
+        {
+          "ean": "7894916145336",
+          "sap": "001967",
+          "descricao": "G GLICLAZIDA 30MG 60CPR LEGR",
+          "estoque": 22,
+          "precoCusto": 8.9,
+          "departamento": "MEDICAMENTO"
+        },
+        {
+          "ean": "7894916149181",
+          "sap": "001968",
+          "descricao": "G GLICLAZIDA 60MG 30CPR LEGR",
+          "estoque": 5,
+          "precoCusto": 14.2,
+          "departamento": "MEDICAMENTO"
+        },
+        {
+          "ean": "7896004706474",
+          "sap": "001969",
+          "descricao": "G GLIBENCLAMIDA 5MG 30CPR EM",
+          "estoque": 30,
+          "precoCusto": 1.95,
+          "departamento": "MEDICAMENTO"
+        },
+        {
+          "ean": "7896004707945",
+          "sap": "001970",
+          "descricao": "G GLIBENCLAMIDA 5MG 30CPR GE",
+          "estoque": 25,
+          "precoCusto": 1.9,
+          "departamento": "MEDICAMENTO"
+        },
+        {
+          "ean": "7896004715527",
+          "sap": "001971",
+          "descricao": "G FUROATO MOMETASONA 1MG CR 20",
+          "estoque": 8,
+          "precoCusto": 15.3,
+          "departamento": "MEDICAMENTO"
+        },
+        {
+          "ean": "7896004715537",
+          "sap": "001972",
+          "descricao": "G FUROATO MOMETASONA 1MG CR 10",
+          "estoque": 12,
+          "precoCusto": 9.8,
+          "departamento": "MEDICAMENTO"
+        },
+        {
+          "ean": "7896004752730",
+          "sap": "001973",
+          "descricao": "G GLICLAZIDA 60MG 30CPR EMS",
+          "estoque": 18,
+          "precoCusto": 13.99,
+          "departamento": "MEDICAMENTO"
+        },
+        {
+          "ean": "7896181906582",
+          "sap": "002394",
+          "descricao": "G FUROSEMIDA 40MG 30CPR BIOS",
+          "estoque": 40,
+          "precoCusto": 2.15,
+          "departamento": "MEDICAMENTO"
+        },
+        {
+          "ean": "7896422515344",
+          "sap": "002396",
+          "descricao": "G FUROATO MOMETASONA 1MG POM 2",
+          "estoque": 14,
+          "precoCusto": 16.4,
+          "departamento": "MEDICAMENTO"
+        },
+        {
+          "ean": "7896523200705",
+          "sap": "002395",
+          "descricao": "G FUROSEMIDA 40MG 20CPR CMD",
+          "estoque": 50,
+          "precoCusto": 1.8,
+          "departamento": "MEDICAMENTO"
+        },
+        {
+          "ean": "7896523213989",
+          "sap": "002397",
+          "descricao": "G GLIBENCLAMIDA 5MG 30CPR CI",
+          "estoque": 35,
+          "precoCusto": 1.75,
+          "departamento": "MEDICAMENTO"
+        },
+        {
+          "ean": "7896714217093",
+          "sap": "002398",
+          "descricao": "G GLIBENCLAMIDA 5MG 30CPR NE",
+          "estoque": 20,
+          "precoCusto": 1.82,
+          "departamento": "MEDICAMENTO"
+        },
+        {
+          "ean": "7896714234564",
+          "sap": "002399",
+          "descricao": "G FUROSEMIDA 40MG 30CPR NEOQ",
+          "estoque": 65,
+          "precoCusto": 2.1,
+          "departamento": "MEDICAMENTO"
+        }
+      ],
+      "addresses": [
+        {
+          "codigo": "2371"
+        },
+        {
+          "codigo": "2372"
+        },
+        {
+          "codigo": "2373"
+        },
+        {
+          "codigo": "2374"
+        },
+        {
+          "codigo": "2375"
+        },
+        {
+          "codigo": "2376"
+        },
+        {
+          "codigo": "2377"
+        },
+        {
+          "codigo": "2378"
+        },
+        {
+          "codigo": "2379"
+        },
+        {
+          "codigo": "2380"
+        },
+        {
+          "codigo": "2381"
+        },
+        {
+          "codigo": "2382"
+        },
+        {
+          "codigo": "2383"
+        },
+        {
+          "codigo": "2384"
+        },
+        {
+          "codigo": "2385"
+        },
+        {
+          "codigo": "2386"
+        },
+        {
+          "codigo": "2387"
+        },
+        {
+          "codigo": "2388"
+        },
+        {
+          "codigo": "2389"
+        },
+        {
+          "codigo": "2390"
+        },
+        {
+          "codigo": "2391"
+        },
+        {
+          "codigo": "2392"
+        },
+        {
+          "codigo": "2393"
+        },
+        {
+          "codigo": "2394"
+        },
+        {
+          "codigo": "2395"
+        },
+        {
+          "codigo": "2396"
+        },
+        {
+          "codigo": "2397"
+        },
+        {
+          "codigo": "2398"
+        },
+        {
+          "codigo": "2399"
+        },
+        {
+          "codigo": "2400"
+        },
+        {
+          "codigo": "2401"
+        },
+        {
+          "codigo": "2402"
+        },
+        {
+          "codigo": "2403"
+        },
+        {
+          "codigo": "2404"
+        },
+        {
+          "codigo": "2405"
+        },
+        {
+          "codigo": "2406"
+        },
+        {
+          "codigo": "2407"
+        },
+        {
+          "codigo": "2408"
+        },
+        {
+          "codigo": "2409"
+        },
+        {
+          "codigo": "2410"
+        },
+        {
+          "codigo": "2411"
+        },
+        {
+          "codigo": "2412"
+        }
+      ],
+      "sectors": [
+        {
+          "id": "sec_a",
+          "nome": "A - ESTOQUE",
+          "tipo": "ESTOQUE",
+          "rangeStart": "2371",
+          "rangeEnd": "2380",
+          "sections": [
+            {
+              "code": "2371",
+              "status": "CONTADO",
+              "contagens": [
+                {
+                  "operatorId": "op3",
+                  "operatorName": "JOÃO HENRIQUE",
+                  "startTime": "2026-07-20T04:30:00Z",
+                  "endTime": "2026-07-20T04:45:00Z",
+                  "transmitTime": "2026-07-20T04:45:15Z",
+                  "items": [
+                    {
+                      "ean": "7896004706474",
+                      "sap": "001969",
+                      "descricao": "G GLIBENCLAMIDA 5MG 30CPR EM",
+                      "quantidade": 15,
+                      "timestamp": "2026-07-20T04:32:00Z",
+                      "operatorId": "op3",
+                      "operatorName": "JOÃO HENRIQUE"
+                    }
+                  ]
+                }
+              ],
+              "finalizado": true
+            },
+            {
+              "code": "2372",
+              "status": "CONTADO",
+              "contagens": [
+                {
+                  "operatorId": "op3",
+                  "operatorName": "JOÃO HENRIQUE",
+                  "startTime": "2026-07-20T04:30:00Z",
+                  "endTime": "2026-07-20T04:45:00Z",
+                  "transmitTime": "2026-07-20T04:45:15Z",
+                  "items": [
+                    {
+                      "ean": "7896004706474",
+                      "sap": "001969",
+                      "descricao": "G GLIBENCLAMIDA 5MG 30CPR EM",
+                      "quantidade": 15,
+                      "timestamp": "2026-07-20T04:32:00Z",
+                      "operatorId": "op3",
+                      "operatorName": "JOÃO HENRIQUE"
+                    }
+                  ]
+                }
+              ],
+              "finalizado": true
+            },
+            {
+              "code": "2373",
+              "status": "CONTADO",
+              "contagens": [
+                {
+                  "operatorId": "op3",
+                  "operatorName": "JOÃO HENRIQUE",
+                  "startTime": "2026-07-20T04:30:00Z",
+                  "endTime": "2026-07-20T04:45:00Z",
+                  "transmitTime": "2026-07-20T04:45:15Z",
+                  "items": [
+                    {
+                      "ean": "7896004706474",
+                      "sap": "001969",
+                      "descricao": "G GLIBENCLAMIDA 5MG 30CPR EM",
+                      "quantidade": 15,
+                      "timestamp": "2026-07-20T04:32:00Z",
+                      "operatorId": "op3",
+                      "operatorName": "JOÃO HENRIQUE"
+                    }
+                  ]
+                }
+              ],
+              "finalizado": true
+            },
+            {
+              "code": "2374",
+              "status": "CONTADO",
+              "contagens": [
+                {
+                  "operatorId": "op3",
+                  "operatorName": "JOÃO HENRIQUE",
+                  "startTime": "2026-07-20T04:30:00Z",
+                  "endTime": "2026-07-20T04:45:00Z",
+                  "transmitTime": "2026-07-20T04:45:15Z",
+                  "items": [
+                    {
+                      "ean": "7896004706474",
+                      "sap": "001969",
+                      "descricao": "G GLIBENCLAMIDA 5MG 30CPR EM",
+                      "quantidade": 15,
+                      "timestamp": "2026-07-20T04:32:00Z",
+                      "operatorId": "op3",
+                      "operatorName": "JOÃO HENRIQUE"
+                    }
+                  ]
+                }
+              ],
+              "finalizado": true
+            },
+            {
+              "code": "2375",
+              "status": "CONTADO",
+              "contagens": [
+                {
+                  "operatorId": "op3",
+                  "operatorName": "JOÃO HENRIQUE",
+                  "startTime": "2026-07-20T04:30:00Z",
+                  "endTime": "2026-07-20T04:45:00Z",
+                  "transmitTime": "2026-07-20T04:45:15Z",
+                  "items": [
+                    {
+                      "ean": "7896004706474",
+                      "sap": "001969",
+                      "descricao": "G GLIBENCLAMIDA 5MG 30CPR EM",
+                      "quantidade": 15,
+                      "timestamp": "2026-07-20T04:32:00Z",
+                      "operatorId": "op3",
+                      "operatorName": "JOÃO HENRIQUE"
+                    }
+                  ]
+                }
+              ],
+              "finalizado": true
+            },
+            {
+              "code": "2376",
+              "status": "NAO_INICIADO",
+              "contagens": [],
+              "finalizado": false
+            },
+            {
+              "code": "2377",
+              "status": "NAO_INICIADO",
+              "contagens": [],
+              "finalizado": false
+            },
+            {
+              "code": "2378",
+              "status": "NAO_INICIADO",
+              "contagens": [],
+              "finalizado": false
+            },
+            {
+              "code": "2379",
+              "status": "NAO_INICIADO",
+              "contagens": [],
+              "finalizado": false
+            },
+            {
+              "code": "2380",
+              "status": "NAO_INICIADO",
+              "contagens": [],
+              "finalizado": false
+            }
+          ]
+        },
+        {
+          "id": "sec_b",
+          "nome": "B - MEDICAMENTO",
+          "tipo": "LOJA",
+          "rangeStart": "2381",
+          "rangeEnd": "2412",
+          "sections": [
+            {
+              "code": "2381",
+              "status": "NAO_INICIADO",
+              "contagens": [],
+              "finalizado": false
+            },
+            {
+              "code": "2382",
+              "status": "NAO_INICIADO",
+              "contagens": [],
+              "finalizado": false
+            },
+            {
+              "code": "2383",
+              "status": "NAO_INICIADO",
+              "contagens": [],
+              "finalizado": false
+            },
+            {
+              "code": "2384",
+              "status": "NAO_INICIADO",
+              "contagens": [],
+              "finalizado": false
+            },
+            {
+              "code": "2385",
+              "status": "NAO_INICIADO",
+              "contagens": [],
+              "finalizado": false
+            },
+            {
+              "code": "2386",
+              "status": "NAO_INICIADO",
+              "contagens": [],
+              "finalizado": false
+            },
+            {
+              "code": "2387",
+              "status": "NAO_INICIADO",
+              "contagens": [],
+              "finalizado": false
+            },
+            {
+              "code": "2388",
+              "status": "NAO_INICIADO",
+              "contagens": [],
+              "finalizado": false
+            },
+            {
+              "code": "2389",
+              "status": "NAO_INICIADO",
+              "contagens": [],
+              "finalizado": false
+            },
+            {
+              "code": "2390",
+              "status": "NAO_INICIADO",
+              "contagens": [],
+              "finalizado": false
+            },
+            {
+              "code": "2391",
+              "status": "CONFERIDO_OK",
+              "contagens": [
+                {
+                  "operatorId": "op2",
+                  "operatorName": "MICHEL GOMES",
+                  "startTime": "2026-07-20T05:00:00Z",
+                  "endTime": "2026-07-20T05:05:00Z",
+                  "transmitTime": "2026-07-20T05:05:05Z",
+                  "items": [
+                    {
+                      "ean": "7896181906582",
+                      "sap": "002394",
+                      "descricao": "G FUROSEMIDA 40MG 30CPR BIOS",
+                      "quantidade": 10,
+                      "timestamp": "2026-07-20T05:01:00Z",
+                      "operatorId": "op2",
+                      "operatorName": "MICHEL GOMES"
+                    }
+                  ]
+                },
+                {
+                  "operatorId": "op3",
+                  "operatorName": "JOÃO HENRIQUE",
+                  "startTime": "2026-07-20T05:08:00Z",
+                  "endTime": "2026-07-20T05:12:00Z",
+                  "transmitTime": "2026-07-20T05:12:05Z",
+                  "items": [
+                    {
+                      "ean": "7896181906582",
+                      "sap": "002394",
+                      "descricao": "G FUROSEMIDA 40MG 30CPR BIOS",
+                      "quantidade": 10,
+                      "timestamp": "2026-07-20T05:09:00Z",
+                      "operatorId": "op3",
+                      "operatorName": "JOÃO HENRIQUE"
+                    }
+                  ]
+                }
+              ],
+              "finalizado": true
+            },
+            {
+              "code": "2392",
+              "status": "CONTADO",
+              "contagens": [
+                {
+                  "operatorId": "op1",
+                  "operatorName": "INGRID SANTOS",
+                  "startTime": "2026-07-20T05:15:00.000Z",
+                  "endTime": "2026-07-20T05:20:41.000Z",
+                  "transmitTime": "2026-07-20T05:20:50.000Z",
+                  "items": [
+                    {
+                      "ean": "7891317004347",
+                      "sap": "001965",
+                      "descricao": "G PREDNISOLONA 11MG GTS 20ML",
+                      "quantidade": 2,
+                      "timestamp": "2026-07-20T05:15:30Z",
+                      "operatorId": "op1",
+                      "operatorName": "INGRID SANTOS"
+                    },
+                    {
+                      "ean": "7891317010362",
+                      "sap": "001966",
+                      "descricao": "G FUROATO MOMETASONA 50MCG SPR",
+                      "quantidade": 1,
+                      "timestamp": "2026-07-20T05:16:12Z",
+                      "operatorId": "op1",
+                      "operatorName": "INGRID SANTOS"
+                    },
+                    {
+                      "ean": "7894916145336",
+                      "sap": "001967",
+                      "descricao": "G GLICLAZIDA 30MG 60CPR LEGR",
+                      "quantidade": 2,
+                      "timestamp": "2026-07-20T05:16:45Z",
+                      "operatorId": "op1",
+                      "operatorName": "INGRID SANTOS"
+                    },
+                    {
+                      "ean": "7894916149181",
+                      "sap": "001968",
+                      "descricao": "G GLICLAZIDA 60MG 30CPR LEGR",
+                      "quantidade": 1,
+                      "timestamp": "2026-07-20T05:17:10Z",
+                      "operatorId": "op1",
+                      "operatorName": "INGRID SANTOS"
+                    }
+                  ]
+                }
+              ],
+              "finalizado": true
+            },
+            {
+              "code": "2393",
+              "status": "DIVERGENTE",
+              "contagens": [
+                {
+                  "operatorId": "op2",
+                  "operatorName": "MICHEL GOMES",
+                  "startTime": "2026-07-20T05:10:00Z",
+                  "endTime": "2026-07-20T05:14:00Z",
+                  "transmitTime": "2026-07-20T05:14:10Z",
+                  "items": [
+                    {
+                      "ean": "7896523200705",
+                      "sap": "002395",
+                      "descricao": "G FUROSEMIDA 40MG 20CPR CMD",
+                      "quantidade": 7,
+                      "timestamp": "2026-07-20T05:11:00Z",
+                      "operatorId": "op2",
+                      "operatorName": "MICHEL GOMES"
+                    }
+                  ]
+                },
+                {
+                  "operatorId": "op4",
+                  "operatorName": "ESTHER RODRIGUES",
+                  "startTime": "2026-07-20T05:16:00Z",
+                  "endTime": "2026-07-20T05:20:00Z",
+                  "transmitTime": "2026-07-20T05:20:10Z",
+                  "items": [
+                    {
+                      "ean": "7896523200705",
+                      "sap": "002395",
+                      "descricao": "G FUROSEMIDA 40MG 20CPR CMD",
+                      "quantidade": 8,
+                      "timestamp": "2026-07-20T05:17:00Z",
+                      "operatorId": "op4",
+                      "operatorName": "ESTHER RODRIGUES"
+                    }
+                  ]
+                }
+              ],
+              "finalizado": false
+            },
+            {
+              "code": "2394",
+              "status": "NAO_INICIADO",
+              "contagens": [],
+              "finalizado": false
+            },
+            {
+              "code": "2395",
+              "status": "NAO_INICIADO",
+              "contagens": [],
+              "finalizado": false
+            },
+            {
+              "code": "2396",
+              "status": "NAO_INICIADO",
+              "contagens": [],
+              "finalizado": false
+            },
+            {
+              "code": "2397",
+              "status": "NAO_INICIADO",
+              "contagens": [],
+              "finalizado": false
+            },
+            {
+              "code": "2398",
+              "status": "NAO_INICIADO",
+              "contagens": [],
+              "finalizado": false
+            },
+            {
+              "code": "2399",
+              "status": "NAO_INICIADO",
+              "contagens": [],
+              "finalizado": false
+            },
+            {
+              "code": "2400",
+              "status": "NAO_INICIADO",
+              "contagens": [],
+              "finalizado": false
+            },
+            {
+              "code": "2401",
+              "status": "NAO_INICIADO",
+              "contagens": [],
+              "finalizado": false
+            },
+            {
+              "code": "2402",
+              "status": "NAO_INICIADO",
+              "contagens": [],
+              "finalizado": false
+            },
+            {
+              "code": "2403",
+              "status": "NAO_INICIADO",
+              "contagens": [],
+              "finalizado": false
+            },
+            {
+              "code": "2404",
+              "status": "NAO_INICIADO",
+              "contagens": [],
+              "finalizado": false
+            },
+            {
+              "code": "2405",
+              "status": "NAO_INICIADO",
+              "contagens": [],
+              "finalizado": false
+            },
+            {
+              "code": "2406",
+              "status": "NAO_INICIADO",
+              "contagens": [],
+              "finalizado": false
+            },
+            {
+              "code": "2407",
+              "status": "NAO_INICIADO",
+              "contagens": [],
+              "finalizado": false
+            },
+            {
+              "code": "2408",
+              "status": "NAO_INICIADO",
+              "contagens": [],
+              "finalizado": false
+            },
+            {
+              "code": "2409",
+              "status": "NAO_INICIADO",
+              "contagens": [],
+              "finalizado": false
+            },
+            {
+              "code": "2410",
+              "status": "NAO_INICIADO",
+              "contagens": [],
+              "finalizado": false
+            },
+            {
+              "code": "2411",
+              "status": "NAO_INICIADO",
+              "contagens": [],
+              "finalizado": false
+            },
+            {
+              "code": "2412",
+              "status": "NAO_INICIADO",
+              "contagens": [],
+              "finalizado": false
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "inv2",
+      "nome": "TAMOIO FILIAL 134",
+      "filial": "MESQUITA/RJ",
+      "dataExecucao": "2026-07-15",
+      "dataEdicao": "2026-07-15T18:00:00.000Z",
+      "status": "FINALIZADO",
+      "tipoContagem": "NORMAL_FECHADA_SEM_MULT",
+      "coletaPallets": "NAO",
+      "permissaoColeta": "SOMENTE_CARREGADOS",
+      "compara": false,
+      "coordenador": "SICRANO DA SILVA",
+      "gerente": "FULANO DE TAL",
+      "inicioEstoque": "07:30",
+      "terminoEstoque": "11:45",
+      "inicioLoja": "13:00",
+      "terminoLoja": "17:30",
+      "products": [
+        {
+          "ean": "7891317004347",
+          "sap": "001965",
+          "descricao": "G PREDNISOLONA 11MG GTS 20ML",
+          "estoque": 15,
+          "precoCusto": 4.5,
+          "departamento": "MEDICAMENTO"
+        },
+        {
+          "ean": "7891317010362",
+          "sap": "001966",
+          "descricao": "G FUROATO MOMETASONA 50MCG SPR",
+          "estoque": 10,
+          "precoCusto": 12.8,
+          "departamento": "MEDICAMENTO"
+        },
+        {
+          "ean": "7894916145336",
+          "sap": "001967",
+          "descricao": "G GLICLAZIDA 30MG 60CPR LEGR",
+          "estoque": 22,
+          "precoCusto": 8.9,
+          "departamento": "MEDICAMENTO"
+        },
+        {
+          "ean": "7894916149181",
+          "sap": "001968",
+          "descricao": "G GLICLAZIDA 60MG 30CPR LEGR",
+          "estoque": 5,
+          "precoCusto": 14.2,
+          "departamento": "MEDICAMENTO"
+        },
+        {
+          "ean": "7896004706474",
+          "sap": "001969",
+          "descricao": "G GLIBENCLAMIDA 5MG 30CPR EM",
+          "estoque": 30,
+          "precoCusto": 1.95,
+          "departamento": "MEDICAMENTO"
+        },
+        {
+          "ean": "7896004707945",
+          "sap": "001970",
+          "descricao": "G GLIBENCLAMIDA 5MG 30CPR GE",
+          "estoque": 25,
+          "precoCusto": 1.9,
+          "departamento": "MEDICAMENTO"
+        },
+        {
+          "ean": "7896004715527",
+          "sap": "001971",
+          "descricao": "G FUROATO MOMETASONA 1MG CR 20",
+          "estoque": 8,
+          "precoCusto": 15.3,
+          "departamento": "MEDICAMENTO"
+        },
+        {
+          "ean": "7896004715537",
+          "sap": "001972",
+          "descricao": "G FUROATO MOMETASONA 1MG CR 10",
+          "estoque": 12,
+          "precoCusto": 9.8,
+          "departamento": "MEDICAMENTO"
+        },
+        {
+          "ean": "7896004752730",
+          "sap": "001973",
+          "descricao": "G GLICLAZIDA 60MG 30CPR EMS",
+          "estoque": 18,
+          "precoCusto": 13.99,
+          "departamento": "MEDICAMENTO"
+        },
+        {
+          "ean": "7896181906582",
+          "sap": "002394",
+          "descricao": "G FUROSEMIDA 40MG 30CPR BIOS",
+          "estoque": 40,
+          "precoCusto": 2.15,
+          "departamento": "MEDICAMENTO"
+        },
+        {
+          "ean": "7896422515344",
+          "sap": "002396",
+          "descricao": "G FUROATO MOMETASONA 1MG POM 2",
+          "estoque": 14,
+          "precoCusto": 16.4,
+          "departamento": "MEDICAMENTO"
+        },
+        {
+          "ean": "7896523200705",
+          "sap": "002395",
+          "descricao": "G FUROSEMIDA 40MG 20CPR CMD",
+          "estoque": 50,
+          "precoCusto": 1.8,
+          "departamento": "MEDICAMENTO"
+        },
+        {
+          "ean": "7896523213989",
+          "sap": "002397",
+          "descricao": "G GLIBENCLAMIDA 5MG 30CPR CI",
+          "estoque": 35,
+          "precoCusto": 1.75,
+          "departamento": "MEDICAMENTO"
+        },
+        {
+          "ean": "7896714217093",
+          "sap": "002398",
+          "descricao": "G GLIBENCLAMIDA 5MG 30CPR NE",
+          "estoque": 20,
+          "precoCusto": 1.82,
+          "departamento": "MEDICAMENTO"
+        },
+        {
+          "ean": "7896714234564",
+          "sap": "002399",
+          "descricao": "G FUROSEMIDA 40MG 30CPR NEOQ",
+          "estoque": 65,
+          "precoCusto": 2.1,
+          "departamento": "MEDICAMENTO"
+        }
+      ],
+      "addresses": [
+        {
+          "codigo": "2371"
+        },
+        {
+          "codigo": "2372"
+        },
+        {
+          "codigo": "2373"
+        },
+        {
+          "codigo": "2374"
+        },
+        {
+          "codigo": "2375"
+        },
+        {
+          "codigo": "2376"
+        },
+        {
+          "codigo": "2377"
+        },
+        {
+          "codigo": "2378"
+        },
+        {
+          "codigo": "2379"
+        },
+        {
+          "codigo": "2380"
+        },
+        {
+          "codigo": "2381"
+        },
+        {
+          "codigo": "2382"
+        },
+        {
+          "codigo": "2383"
+        },
+        {
+          "codigo": "2384"
+        },
+        {
+          "codigo": "2385"
+        },
+        {
+          "codigo": "2386"
+        },
+        {
+          "codigo": "2387"
+        },
+        {
+          "codigo": "2388"
+        },
+        {
+          "codigo": "2389"
+        },
+        {
+          "codigo": "2390"
+        },
+        {
+          "codigo": "2391"
+        },
+        {
+          "codigo": "2392"
+        },
+        {
+          "codigo": "2393"
+        },
+        {
+          "codigo": "2394"
+        },
+        {
+          "codigo": "2395"
+        },
+        {
+          "codigo": "2396"
+        },
+        {
+          "codigo": "2397"
+        },
+        {
+          "codigo": "2398"
+        },
+        {
+          "codigo": "2399"
+        },
+        {
+          "codigo": "2400"
+        },
+        {
+          "codigo": "2401"
+        },
+        {
+          "codigo": "2402"
+        },
+        {
+          "codigo": "2403"
+        },
+        {
+          "codigo": "2404"
+        },
+        {
+          "codigo": "2405"
+        },
+        {
+          "codigo": "2406"
+        },
+        {
+          "codigo": "2407"
+        },
+        {
+          "codigo": "2408"
+        },
+        {
+          "codigo": "2409"
+        },
+        {
+          "codigo": "2410"
+        },
+        {
+          "codigo": "2411"
+        },
+        {
+          "codigo": "2412"
+        }
+      ],
+      "sectors": [
+        {
+          "id": "sec_1",
+          "nome": "A - ESTOQUE PRINCIPAL",
+          "tipo": "ESTOQUE",
+          "rangeStart": "2371",
+          "rangeEnd": "2390",
+          "sections": [
+            {
+              "code": "2371",
+              "status": "CONTADO",
+              "contagens": [],
+              "finalizado": true
+            },
+            {
+              "code": "2372",
+              "status": "CONTADO",
+              "contagens": [],
+              "finalizado": true
+            },
+            {
+              "code": "2373",
+              "status": "CONTADO",
+              "contagens": [],
+              "finalizado": true
+            },
+            {
+              "code": "2374",
+              "status": "CONTADO",
+              "contagens": [],
+              "finalizado": true
+            },
+            {
+              "code": "2375",
+              "status": "CONTADO",
+              "contagens": [],
+              "finalizado": true
+            },
+            {
+              "code": "2376",
+              "status": "CONTADO",
+              "contagens": [],
+              "finalizado": true
+            },
+            {
+              "code": "2377",
+              "status": "CONTADO",
+              "contagens": [],
+              "finalizado": true
+            },
+            {
+              "code": "2378",
+              "status": "CONTADO",
+              "contagens": [],
+              "finalizado": true
+            },
+            {
+              "code": "2379",
+              "status": "CONTADO",
+              "contagens": [],
+              "finalizado": true
+            },
+            {
+              "code": "2380",
+              "status": "CONTADO",
+              "contagens": [],
+              "finalizado": true
+            },
+            {
+              "code": "2381",
+              "status": "CONTADO",
+              "contagens": [],
+              "finalizado": true
+            },
+            {
+              "code": "2382",
+              "status": "CONTADO",
+              "contagens": [],
+              "finalizado": true
+            },
+            {
+              "code": "2383",
+              "status": "CONTADO",
+              "contagens": [],
+              "finalizado": true
+            },
+            {
+              "code": "2384",
+              "status": "CONTADO",
+              "contagens": [],
+              "finalizado": true
+            },
+            {
+              "code": "2385",
+              "status": "CONTADO",
+              "contagens": [],
+              "finalizado": true
+            },
+            {
+              "code": "2386",
+              "status": "CONTADO",
+              "contagens": [],
+              "finalizado": true
+            },
+            {
+              "code": "2387",
+              "status": "CONTADO",
+              "contagens": [],
+              "finalizado": true
+            },
+            {
+              "code": "2388",
+              "status": "CONTADO",
+              "contagens": [],
+              "finalizado": true
+            },
+            {
+              "code": "2389",
+              "status": "CONTADO",
+              "contagens": [],
+              "finalizado": true
+            },
+            {
+              "code": "2390",
+              "status": "CONTADO",
+              "contagens": [],
+              "finalizado": true
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "nome": "TESTE DE INVENTARIO",
+      "filial": "01",
+      "status": "PLANEJADO",
+      "id": "inv_1785981339286",
+      "sectors": [],
+      "products": [],
+      "addresses": [],
+      "dataEdicao": "2026-08-06T01:55:39.288Z"
+    }
+  ]
+}

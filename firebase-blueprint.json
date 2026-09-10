@@ -1,0 +1,69 @@
+{
+  "collections": {
+    "companies": {
+      "description": "Empresas cadastradas no sistema",
+      "fields": {
+        "id": "string",
+        "cnpj": "string",
+        "razaoSocial": "string",
+        "nomeFantasia": "string",
+        "logotipo": "string?",
+        "parcerias": "string[]"
+      },
+      "rules": "allow read, write: if true;"
+    },
+    "operators": {
+      "description": "Operadores/Auditores do sistema",
+      "fields": {
+        "id": "string",
+        "cpf": "string",
+        "nomeCompleto": "string",
+        "dataNascimento": "string",
+        "senhaPreenchedores": "string",
+        "companyId": "string",
+        "hierarquia": "string?"
+      },
+      "rules": "allow read, write: if true;"
+    },
+    "devices": {
+      "description": "Dispositivos ou Coletores registrados",
+      "fields": {
+        "id": "string",
+        "nomeFantasia": "string",
+        "companyId": "string",
+        "lastActive": "string"
+      },
+      "rules": "allow read, write: if true;"
+    },
+    "inventories": {
+      "description": "Documentos principais de cada inventário",
+      "fields": {
+        "id": "string",
+        "nome": "string",
+        "filial": "string",
+        "dataExecucao": "string",
+        "dataEdicao": "string",
+        "status": "string",
+        "tipoContagem": "string",
+        "coletaPallets": "string",
+        "permissaoColeta": "string",
+        "compara": "boolean",
+        "comparaViaLink": "boolean?",
+        "coordenador": "string?",
+        "gerente": "string?",
+        "inicioEstoque": "string?",
+        "terminoEstoque": "string?",
+        "inicioLoja": "string?",
+        "terminoLoja": "string?",
+        "inicioDivergencia": "string?",
+        "terminoDivergencia": "string?",
+        "assinaturaGerente": "string?",
+        "assinaturaCoordenador": "string?",
+        "sectors": "any[]",
+        "products": "any[]",
+        "addresses": "any[]"
+      },
+      "rules": "allow read, write: if true;"
+    }
+  }
+}

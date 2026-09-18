@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useRef } from "react";
 import { Inventory, Sector, Section, Product, Operator, SeçãoContagem, ColetaItem } from "../types";
-import { Plus, Trash2, Edit2, ShieldAlert, Barcode, CheckCircle, Clock, Users, Play, ListFilter, MoreVertical, X, Trash, RefreshCw, AlertTriangle, FileText, Check, Home, MapPin, Smartphone, Database, ChevronDown, ChevronUp, FolderOpen, Info, Search, Calendar, Save, HelpCircle, FileSpreadsheet, Download, Sliders, ExternalLink } from "lucide-react";
+import { Plus, Trash2, Edit2, ShieldAlert, Barcode, CheckCircle, Clock, Users, Play, ListFilter, MoreVertical, X, Trash, RefreshCw, AlertTriangle, FileText, Check, Home, MapPin, Smartphone, Database, ChevronDown, ChevronUp, FolderOpen, Info, Search, Calendar, Save, HelpCircle, FileSpreadsheet, Download, Upload, Sliders, ExternalLink } from "lucide-react";
 import ExportResultModal, { getSavedLayouts, deleteSavedLayout, exportInventoryFile, ExportLayoutConfig } from "./ExportResultModal";
 import InventoryProductsModal from "./InventoryProductsModal";
 
@@ -452,7 +452,10 @@ export default function Dashboard({ inventory, operators, onSync, setActiveTab, 
   const totalSectorsCount = sectorsList.length;
   
   const completedSectorsCount = sectorsList.filter(sec => 
-    sec.sections.length > 0 && sec.sections.every(s => s.status === "CONTADO" || s.status === "CONFERIDO_OK")
+    sec.sections.length > 0 && sec.sections.every(s => 
+      (s.status === "CONTADO" || s.status === "CONFERIDO_OK") &&
+      s.contagens && s.contagens.some(c => c.items && c.items.some(it => (Number(it.quantidade) || 0) > 0))
+    )
   ).length;
 
   let totalSectionsCount = 0;
@@ -473,10 +476,12 @@ export default function Dashboard({ inventory, operators, onSync, setActiveTab, 
   sectorsList.forEach(sec => {
     totalSectionsCount += sec.sections.length;
     sec.sections.forEach(s => {
-      if (s.status !== "NAO_INICIADO") {
+      const hasValidItems = s.contagens && s.contagens.some(c => c.items && c.items.some(it => (Number(it.quantidade) || 0) > 0));
+      if (s.status !== "NAO_INICIADO" && hasValidItems) {
         countedSectionsCount++;
       }
       
+      const isCompara = Boolean(Number(inventory.compara));
       let validContagemForPieces = s.contagens.length > 0 ? s.contagens[s.contagens.length - 1] : null;
 
       s.contagens.forEach(c => {
@@ -495,7 +500,7 @@ export default function Dashboard({ inventory, operators, onSync, setActiveTab, 
         c.items.forEach(it => {
           uniqueCodesCounted.add(it.ean);
           
-          if (!inventory.compara || c === validContagemForPieces) {
+          if (!isCompara || c === validContagemForPieces) {
             totalPiecesCounted += it.quantidade;
           }
           
@@ -507,7 +512,7 @@ export default function Dashboard({ inventory, operators, onSync, setActiveTab, 
             const itemTime = new Date(it.timestamp).getTime();
             if (!isNaN(itemTime)) {
               if (itemTime >= oneHourAgo) {
-                if (!inventory.compara || c === validContagemForPieces) {
+                if (!isCompara || c === validContagemForPieces) {
                   lastHourPieces += it.quantidade;
                 }
                 lastHourBips += 1;
@@ -702,6 +707,78 @@ export default function Dashboard({ inventory, operators, onSync, setActiveTab, 
     });
   }
 
+  // Clear second count to allow recount in double-count mode
+  async function executeClearSecondCount(sectorId: string, sectionCode: string) {
+    try {
+      const res = await fetch(`/api/inventories/${inventory.id}/manage-section`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ sectorId, sectionCode, action: "clear_second_count" })
+      });
+      if (res.ok) {
+        setSelectedSection(null);
+        onSync();
+      }
+    } catch(e) {}
+  }
+
+  // Force mark section as CONFERIDO_OK
+  async function executeForceConferidoOk(sectorId: string, sectionCode: string) {
+    try {
+      const res = await fetch(`/api/inventories/${inventory.id}/manage-section`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ sectorId, sectionCode, action: "conferido_ok" })
+      });
+      if (res.ok) {
+        setSelectedSection(null);
+        onSync();
+      }
+    } catch(e) {}
+  }
+
+  async function executeForceCount1(sectorId: string, sectionCode: string) {
+    try {
+      const res = await fetch(`/api/inventories/${inventory.id}/manage-section`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ sectorId, sectionCode, action: "force_count_1" })
+      });
+      if (res.ok) {
+        setSelectedSection(null);
+        onSync();
+      }
+    } catch(e) {}
+  }
+
+  async function executeForceCount2(sectorId: string, sectionCode: string) {
+    try {
+      const res = await fetch(`/api/inventories/${inventory.id}/manage-section`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ sectorId, sectionCode, action: "force_count_2" })
+      });
+      if (res.ok) {
+        setSelectedSection(null);
+        onSync();
+      }
+    } catch(e) {}
+  }
+
+  async function executeReleaseThirdCount(sectorId: string, sectionCode: string) {
+    try {
+      const res = await fetch(`/api/inventories/${inventory.id}/manage-section`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ sectorId, sectionCode, action: "release_third_count" })
+      });
+      if (res.ok) {
+        setSelectedSection(null);
+        onSync();
+      }
+    } catch(e) {}
+  }
+
   // Edit / Add items to a counted section manually (Page 13 - Imagem 17/18)
   async function handleAddManualItemToSection(sectorId: string, sectionCode: string) {
     if (!newItemEan.trim() || newItemQty <= 0) return;
@@ -769,7 +846,9 @@ export default function Dashboard({ inventory, operators, onSync, setActiveTab, 
         return { ...it, quantidade: newQty };
       }
       return it;
-    }).filter(it => it.quantidade > 0);
+    }).filter(it => (Number(it.quantidade) || 0) > 0);
+
+    const isCompletelyEmpty = updatedItems.length === 0;
 
     try {
       const res = await fetch(`/api/inventories/${inventory.id}/manage-section`, {
@@ -778,7 +857,7 @@ export default function Dashboard({ inventory, operators, onSync, setActiveTab, 
         body: JSON.stringify({
           sectorId,
           sectionCode,
-          action: "save_items",
+          action: isCompletelyEmpty ? "clear" : "save_items",
           items: updatedItems
         })
       });
@@ -819,6 +898,142 @@ export default function Dashboard({ inventory, operators, onSync, setActiveTab, 
       onCancel: () => {}
     });
   }
+
+  const handleFileUploadToSection = async (
+    e: React.ChangeEvent<HTMLInputElement>,
+    sectorId: string,
+    targetSectionCode: string,
+    overrideFinalized: boolean = false
+  ) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    try {
+      const text = await file.text();
+      let json: any;
+      try {
+        // Remove BOM or other potential invisible characters at the start
+        const cleanText = text.replace(/^\uFEFF/, "").trim();
+        json = JSON.parse(cleanText);
+      } catch (parseErr) {
+        console.error("Erro de parse JSON:", parseErr, "Texto:", text.substring(0, 50));
+        setModalDialog({
+          title: "Formato Inválido",
+          message: "O arquivo selecionado não é um JSON válido.",
+          onConfirm: () => {}
+        });
+        return;
+      }
+
+      // Flexible item extraction supporting multiple collector JSON export schemas
+      let rawItems: any[] = [];
+      if (Array.isArray(json)) {
+        rawItems = json;
+      } else if (Array.isArray(json.items)) {
+        rawItems = json.items;
+      } else if (json.contagem && Array.isArray(json.contagem.items)) {
+        rawItems = json.contagem.items;
+      } else if (Array.isArray(json.contagens) && json.contagens[0] && Array.isArray(json.contagens[0].items)) {
+        rawItems = json.contagens[0].items;
+      } else if (json.payload && Array.isArray(json.payload.items)) {
+        rawItems = json.payload.items;
+      } else if (json.data && Array.isArray(json.data.items)) {
+        rawItems = json.data.items;
+      } else {
+        console.error("Estrutura do JSON desconhecida:", json);
+        setModalDialog({
+          title: "Estrutura Não Reconhecida",
+          message: "Não foi possível encontrar a lista de produtos (items) no arquivo JSON. Verifique o formato exportado pelo coletor.",
+          onConfirm: () => {}
+        });
+        return;
+      }
+
+      const normalizedItems = rawItems.map((it: any) => ({
+        ean: String(it.ean || it.barcode || it.codigoBarras || it.codBarras || it.sap || "").trim(),
+        sap: String(it.sap || it.codigo || "").trim(),
+        descricao: String(it.descricao || it.description || it.nome || "PRODUTO").trim(),
+        quantidade: Math.max(0, Number(it.quantidade || it.qtd || it.quant || it.quantity || 1)),
+        timestamp: it.timestamp || new Date().toISOString()
+      })).filter((it: any) => it.quantidade > 0 && it.ean);
+
+      if (normalizedItems.length === 0) {
+        setModalDialog({
+          title: "Nenhum Item Válido",
+          message: "O arquivo JSON não contém nenhum produto com código (EAN/SAP) e quantidade maior que 0.",
+          onConfirm: () => {}
+        });
+        return;
+      }
+
+      const operatorId = json.operatorId || json.operator || "coletor_file";
+      const operatorName = json.operatorName || json.operador || "IMPORTADO VIA ARQUIVO";
+      const collectorNumber = json.collectorNumber || json.coletor || "99";
+      const startTime = json.startTime || new Date().toISOString();
+      const endTime = json.endTime || new Date().toISOString();
+
+      // Submit directly to /api/collect (treated exactly like a normal collector transmission)
+      const res = await fetch("/api/collect", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          inventoryId: inventory.id,
+          sectorId,
+          sectionCode: targetSectionCode,
+          operatorId,
+          operatorName,
+          collectorNumber,
+          items: normalizedItems,
+          startTime,
+          endTime,
+          overrideFinalized
+        })
+      });
+
+      if (!res.ok) {
+        const errData = await res.json();
+        setModalDialog({
+          title: "Erro na Transmissão",
+          message: `Não foi possível processar o upload: ${errData.error || "Erro desconhecido."}`,
+          onConfirm: () => {}
+        });
+        return;
+      }
+
+      const totalQty = normalizedItems.reduce((sum, item) => sum + item.quantidade, 0);
+
+      setModalDialog({
+        title: "Transmissão Importada!",
+        message: `Arquivo da Seção ${targetSectionCode} importado com sucesso!\nOperador: ${operatorName}\nRegistros: ${normalizedItems.length} (${totalQty} peças agregadas).`,
+        onConfirm: () => {}
+      });
+
+      // Synchronize dashboard
+      onSync();
+
+      // Refresh section modal
+      try {
+        const dbRes = await fetch(`/api/inventories/${inventory.id}`);
+        if (dbRes.ok) {
+          const invData: Inventory = await dbRes.json();
+          const updatedSec = invData.sectors.find(s => s.id === sectorId)?.sections.find(s => s.code === targetSectionCode);
+          if (updatedSec) {
+            setSelectedSection({ sectorId, section: updatedSec });
+          }
+        }
+      } catch (err) {}
+    } catch (err: any) {
+      console.error("Erro ao ler JSON de seção:", err);
+      setModalDialog({
+        title: "Erro de Leitura",
+        message: "Falha ao ler o arquivo JSON selecionado.",
+        onConfirm: () => {}
+      });
+    } finally {
+      e.target.value = "";
+    }
+  };
+
 
   const getOperatorName = (id: string) => {
     const op = operators?.find(o => o.id === id);
@@ -901,8 +1116,8 @@ export default function Dashboard({ inventory, operators, onSync, setActiveTab, 
       {/* TWO-COLUMN LAYOUT */}
       <div className="grid grid-cols-1 xl:grid-cols-12 gap-5 items-start">
         
-        {/* LEFT COLUMN (xl:col-span-4) */}
-        <div className="xl:col-span-4 space-y-4">
+        {/* LEFT COLUMN (xl:col-span-4) - Fixed / Sticky when scrolling mapping grid */}
+        <div className="xl:col-span-4 space-y-4 xl:sticky xl:top-20 xl:self-start xl:max-h-[calc(100vh-5.5rem)] xl:overflow-y-auto pr-1">
           
           {/* CARD 1: INVENTORY DETAILS CARD */}
           <div className="bg-white p-5 rounded-2xl border border-slate-200/80 shadow-xs space-y-5">
@@ -983,26 +1198,6 @@ export default function Dashboard({ inventory, operators, onSync, setActiveTab, 
                     </div>
                   </>
                 )}
-              </div>
-            </div>
-
-            {/* Checklist items */}
-            <div className="space-y-2 text-xs text-slate-600">
-              <div className="flex items-center gap-2">
-                <Check className={`w-4 h-4 shrink-0 ${inventory.permissaoColeta !== 'QUALQUER_CODIGO' ? 'text-indigo-600 font-bold' : 'text-slate-300'}`} />
-                <span className={inventory.permissaoColeta === 'QUALQUER_CODIGO' ? 'text-slate-400 line-through' : 'font-medium text-slate-700'}>
-                  Permitir coletar somente produtos carregados
-                </span>
-              </div>
-              <div className="flex items-center gap-2">
-                <Check className={`w-4 h-4 shrink-0 ${inventory.coletaPallets === 'NAO' ? 'text-indigo-600 font-bold' : 'text-slate-300'}`} />
-                <span className={inventory.coletaPallets !== 'NAO' ? 'text-slate-400 line-through' : 'font-medium text-slate-700'}>
-                  Não coletar pallets
-                </span>
-              </div>
-              <div className="flex items-center gap-2">
-                <Check className="w-4 h-4 text-indigo-600 font-bold shrink-0" />
-                <span className="font-medium text-slate-700">Identificar operadores</span>
               </div>
             </div>
 
@@ -1105,29 +1300,18 @@ export default function Dashboard({ inventory, operators, onSync, setActiveTab, 
                   setRangeEnd("");
                   setShowSectorModal(true);
                 }}
-                className="bg-[#00a8e8] hover:bg-[#0096d2] text-white rounded-md p-2 flex flex-col items-center justify-center gap-1.5 transition-colors cursor-pointer active:scale-95"
+                className="bg-slate-200 hover:bg-slate-300 text-slate-500 rounded-md p-2 h-10 flex items-center justify-center transition-colors cursor-pointer active:scale-95"
               >
-                <MapPin className="w-4 h-4" />
                 <span className="text-[9px] font-bold tracking-wider">ADD SETOR</span>
               </button>
-
               {/* PRODUTOS (INDIVIDUAL DO INVENTÁRIO) */}
               <button
                 onClick={() => {
-                  setProductsModalTab("list");
                   setShowProductsModal(true);
                 }}
-                className="bg-[#00a8e8] hover:bg-[#0096d2] text-white rounded-md p-2 flex flex-col items-center justify-center gap-1.5 transition-colors cursor-pointer active:scale-95 relative"
-                title="Catálogo e Importação de Produtos (CSV / TXT)"
+                className="bg-slate-200 hover:bg-slate-300 text-slate-500 rounded-md p-2 h-10 flex items-center justify-center transition-colors cursor-pointer active:scale-95"
+                title="Selecionar e puxar base de produtos do cliente para este inventário"
               >
-                <div className="relative">
-                  <Barcode className="w-4 h-4" />
-                  {inventory.products && inventory.products.length > 0 && (
-                    <span className="absolute -top-1.5 -right-2 bg-emerald-500 text-white font-extrabold text-[8px] rounded-full px-1 flex items-center justify-center border border-white">
-                      {inventory.products.length > 999 ? `${(inventory.products.length / 1000).toFixed(0)}k` : inventory.products.length}
-                    </span>
-                  )}
-                </div>
                 <span className="text-[9px] font-bold tracking-wider">PRODUTOS</span>
               </button>
 
@@ -1135,23 +1319,13 @@ export default function Dashboard({ inventory, operators, onSync, setActiveTab, 
               <div className="relative" ref={resultadoDropdownRef}>
                 <button
                   onClick={() => setShowResultadoDropdown(!showResultadoDropdown)}
-                  className={`w-full rounded-md p-2 flex flex-col items-center justify-center gap-1.5 transition-all cursor-pointer active:scale-95 border ${
+                  className={`w-full h-10 rounded-md p-2 flex items-center justify-center transition-all cursor-pointer active:scale-95 ${
                     showResultadoDropdown
-                      ? "bg-emerald-700 text-white border-emerald-800 shadow-md ring-2 ring-emerald-400"
-                      : savedLayouts.length > 0
-                        ? "bg-emerald-600 hover:bg-emerald-700 text-white border-emerald-700 shadow-xs"
-                        : "bg-emerald-50 hover:bg-emerald-100 text-emerald-800 border-emerald-200"
+                      ? "bg-slate-300 text-slate-600 shadow-inner"
+                      : "bg-slate-200 hover:bg-slate-300 text-slate-500"
                   }`}
                   title="Exportar Resultado do Inventário (Layouts Salvos)"
                 >
-                  <div className="relative">
-                    <FileSpreadsheet className="w-4 h-4" />
-                    {savedLayouts.length > 0 && (
-                      <span className="absolute -top-1.5 -right-2.5 bg-amber-400 text-slate-900 font-extrabold text-[8px] rounded-full w-3.5 h-3.5 flex items-center justify-center border border-white shadow-xs">
-                        {savedLayouts.length}
-                      </span>
-                    )}
-                  </div>
                   <span className="text-[9px] font-bold tracking-wider">RESULTADO</span>
                 </button>
 
@@ -1306,29 +1480,26 @@ export default function Dashboard({ inventory, operators, onSync, setActiveTab, 
               {/* OPERADORES */}
               <button
                 onClick={() => setShowOperatorsModal(true)}
-                className="bg-slate-200 hover:bg-slate-300 text-slate-500 rounded-md p-2 flex flex-col items-center justify-center gap-1.5 transition-colors cursor-pointer active:scale-95"
+                className="bg-slate-200 hover:bg-slate-300 text-slate-500 rounded-md p-2 h-10 flex items-center justify-center transition-colors cursor-pointer active:scale-95"
               >
-                <Users className="w-4 h-4" />
                 <span className="text-[9px] font-bold tracking-wider">OPERADORES</span>
               </button>
 
               {/* ESTOQUE */}
               <button
                 onClick={() => showToast(`Saldo Físico Geral: ${totalPiecesCounted} unidades coletadas.`)}
-                className="bg-slate-200 hover:bg-slate-300 text-slate-500 rounded-md p-2 flex flex-col items-center justify-center gap-1.5 transition-colors cursor-pointer active:scale-95"
+                className="bg-slate-200 hover:bg-slate-300 text-slate-500 rounded-md p-2 h-10 flex items-center justify-center transition-colors cursor-pointer active:scale-95"
               >
-                <Database className="w-4 h-4" />
                 <span className="text-[9px] font-bold tracking-wider">ESTOQUE</span>
               </button>
 
               {/* OPÇÕES / GERAR RESULTADO */}
               <button
                 onClick={() => setShowExportModal(true)}
-                className="bg-emerald-100 hover:bg-emerald-200 text-emerald-800 rounded-md p-2 flex flex-col items-center justify-center gap-1.5 transition-colors cursor-pointer active:scale-95"
+                className="bg-slate-200 hover:bg-slate-300 text-slate-500 rounded-md p-2 h-10 flex items-center justify-center transition-colors cursor-pointer active:scale-95"
                 title="Gerar Resultado do Inventário"
               >
-                <FileSpreadsheet className="w-4 h-4 text-emerald-700" />
-                <span className="text-[9px] font-bold tracking-wider text-emerald-900">OPÇÕES</span>
+                <span className="text-[9px] font-bold tracking-wider">OPÇÕES</span>
               </button>
             </div>
 
@@ -1474,7 +1645,10 @@ export default function Dashboard({ inventory, operators, onSync, setActiveTab, 
             ) : (
               inventory.sectors.map(sec => {
                 const secTotal = sec.sections.length;
-                const secCounted = sec.sections.filter(s => s.status !== "NAO_INICIADO").length;
+                const secCounted = sec.sections.filter(s => 
+                  s.status !== "NAO_INICIADO" && 
+                  s.contagens && s.contagens.some(c => c.items && c.items.some(it => (Number(it.quantidade) || 0) > 0))
+                ).length;
                 const secPct = secTotal > 0 ? ((secCounted / secTotal) * 100).toFixed(0) : "0";
                 const isCollapsed = collapsedSectors[sec.id] || false;
 
@@ -1484,7 +1658,6 @@ export default function Dashboard({ inventory, operators, onSync, setActiveTab, 
                     {/* Sector Header */}
                     <div className="bg-slate-50/50 px-4 py-3 flex justify-between items-center border-b border-slate-200/60 text-xs select-none rounded-t-xl">
                       <div className="flex items-center gap-2">
-                        <MapPin className="w-4 h-4 text-slate-500 shrink-0 stroke-[2]" />
                         <span className="font-bold text-slate-800 tracking-tight text-[13px] uppercase">
                           {sec.numero ? `#${sec.numero} - ` : ""}{sec.nome}
                         </span>
@@ -1607,28 +1780,78 @@ export default function Dashboard({ inventory, operators, onSync, setActiveTab, 
                           // Default cell classes: white symmetrical square with distinct full red contour when empty
                           let cellClass = "bg-white border-2 border-rose-400 text-rose-600 hover:bg-rose-50 hover:border-rose-500 shadow-xs";
                           let totalPieces = 0;
-                          if (inventory.compara && s.contagens.length > 0) {
-                            totalPieces = s.contagens[s.contagens.length - 1].items.reduce((sum, it) => sum + it.quantidade, 0);
+                          const isCompara = Boolean(Number(inventory.compara));
+                          if (isCompara && s.contagens.length > 0) {
+                            totalPieces = s.contagens[s.contagens.length - 1].items.reduce((sum, it) => sum + (Number(it.quantidade) || 0), 0);
                           } else {
-                            totalPieces = s.contagens.reduce((sum, c) => sum + c.items.reduce((itSum, it) => itSum + it.quantidade, 0), 0);
+                            totalPieces = s.contagens.reduce((sum, c) => sum + c.items.reduce((itSum, it) => itSum + (Number(it.quantidade) || 0), 0), 0);
                           }
 
-                          const hasContagensWithItems = Array.isArray(s.contagens) && s.contagens.length > 0 && s.contagens.some((c: any) => c && Array.isArray(c.items) && c.items.length > 0);
-                          const isContadoStatus = (s.status as string) === "CONTADO" || (s.status as string) === "FINALIZADO" || (s.status as string) === "CONCLUIDO" || (s.status as string) === "CONTADA" || Boolean(s.finalizado) || hasContagensWithItems || secPct === "100";
+                          const hasContagensWithItems = totalPieces > 0 && Array.isArray(s.contagens) && s.contagens.length > 0 && s.contagens.some((c: any) => c && Array.isArray(c.items) && c.items.some((it: any) => (Number(it.quantidade) || 0) > 0));
+                          const isContadoStatus = totalPieces > 0 && ((s.status as string) === "CONTADO" || (s.status as string) === "FINALIZADO" || (s.status as string) === "CONCLUIDO" || (s.status as string) === "CONTADA" || Boolean(s.finalizado) || hasContagensWithItems);
+
+                          // Avaliação dinâmica de dupla contagem (Compara)
+                          let doubleCountMatch: boolean | null = null;
+                          if (isCompara && Array.isArray(s.contagens) && s.contagens.length >= 2) {
+                            const c1 = s.contagens[0];
+                            const c2 = s.contagens[s.contagens.length - 1];
+
+                            const map1: Record<string, number> = {};
+                            (c1.items || []).forEach((it: any) => {
+                              const raw = String(it.ean || it.barcode || it.codigoBarras || it.codBarras || it.sap || "").trim();
+                              const key = raw.replace(/^0+/, "") || raw || "ITEM";
+                              map1[key] = (map1[key] || 0) + Math.max(0, Number(it.quantidade) || 0);
+                            });
+
+                            const map2: Record<string, number> = {};
+                            (c2.items || []).forEach((it: any) => {
+                              const raw = String(it.ean || it.barcode || it.codigoBarras || it.codBarras || it.sap || "").trim();
+                              const key = raw.replace(/^0+/, "") || raw || "ITEM";
+                              map2[key] = (map2[key] || 0) + Math.max(0, Number(it.quantidade) || 0);
+                            });
+
+                            const tot1 = Object.values(map1).reduce((a, b) => a + b, 0);
+                            const tot2 = Object.values(map2).reduce((a, b) => a + b, 0);
+
+                            let match = (tot1 === tot2 && tot1 > 0);
+                            if (match) {
+                              const keys1 = Object.keys(map1);
+                              const keys2 = Object.keys(map2);
+                              if (keys1.length !== keys2.length) {
+                                match = false;
+                              } else {
+                                for (const k of keys1) {
+                                  if (map1[k] !== map2[k]) {
+                                    match = false;
+                                    break;
+                                  }
+                                }
+                              }
+                            }
+                            doubleCountMatch = match;
+                          }
                           
-                          // Completed classes with clear full borders
-                          if (s.shadowAudit) {
+                          // Regras de cores e bordas
+                          if (isCompara && Array.isArray(s.contagens) && s.contagens.length >= 2) {
+                            if (doubleCountMatch === true || s.status === "CONFERIDO_OK") {
+                              cellClass = "bg-yellow-400 border-2 border-yellow-600 text-yellow-950 font-bold hover:bg-yellow-500 shadow-xs";
+                            } else {
+                              cellClass = "bg-rose-600 border-2 border-rose-800 text-white font-bold hover:bg-rose-700 shadow-xs animate-pulse";
+                            }
+                          } else if (totalPieces > 0 && s.shadowAudit && !isCompara) {
                             if (!s.shadowAudit.divergente) {
                               cellClass = "bg-yellow-400 border-2 border-yellow-600 text-yellow-950 font-bold hover:bg-yellow-500 shadow-xs";
                             } else {
                               cellClass = "bg-rose-600 border-2 border-rose-800 text-white font-bold hover:bg-rose-700 shadow-xs animate-pulse";
                             }
-                          } else if (s.status === "CONFERIDO_OK") {
+                          } else if (totalPieces > 0 && s.status === "CONFERIDO_OK") {
                             cellClass = "bg-yellow-400 border-2 border-yellow-600 text-yellow-950 font-bold hover:bg-yellow-500 shadow-xs";
-                          } else if (s.status === "DIVERGENTE") {
+                          } else if (totalPieces > 0 && s.status === "DIVERGENTE") {
                             cellClass = "bg-rose-600 border-2 border-rose-800 text-white font-bold hover:bg-rose-700 shadow-xs animate-pulse";
                           } else if (isContadoStatus) {
                             cellClass = "bg-emerald-500 border-2 border-emerald-700 text-white font-bold hover:bg-emerald-600 shadow-xs";
+                          } else {
+                            cellClass = "bg-white border-2 border-rose-400 text-rose-600 hover:bg-rose-50 hover:border-rose-500 shadow-xs";
                           }
 
                           return (
@@ -1809,10 +2032,35 @@ export default function Dashboard({ inventory, operators, onSync, setActiveTab, 
             </div>
 
             {selectedSection.section.contagens.length === 0 ? (
-              <div className="text-center py-8 text-slate-400 text-xs italic space-y-2">
-                <p>Nenhuma coleta transmitida para este endereço ainda.</p>
-                <div className="flex justify-center gap-2">
+              <div className="py-4 space-y-4">
+                <div className="bg-slate-50 border-2 border-dashed border-slate-300 rounded-xl p-5 text-center space-y-3 hover:border-blue-400 transition-colors">
+                  <div className="w-12 h-12 rounded-full bg-blue-100 text-blue-600 flex items-center justify-center mx-auto shadow-xs">
+                    <Upload className="w-6 h-6" />
+                  </div>
+                  <div>
+                    <h4 className="font-bold text-slate-900 text-sm">Upload de Dados da Seção (JSON)</h4>
+                    <p className="text-slate-500 text-xs mt-1 max-w-sm mx-auto">
+                      Se houver problema na transmissão sem fio do coletor, selecione o arquivo JSON exportado do coletor. O sistema processará como uma transmissão normal.
+                    </p>
+                  </div>
+
+                  <div className="pt-2 flex flex-col sm:flex-row justify-center items-center gap-2">
+                    <label className="cursor-pointer bg-blue-600 hover:bg-blue-700 active:scale-95 text-white font-bold px-4 py-2.5 rounded-lg text-xs flex items-center gap-2 shadow-sm transition-all">
+                      <Upload className="w-4 h-4" />
+                      <span>FAZER UPLOAD DA SEÇÃO (.JSON)</span>
+                      <input
+                        type="file"
+                        accept=".json,.txt"
+                        className="hidden"
+                        onChange={(e) => handleFileUploadToSection(e, selectedSection.sectorId, selectedSection.section.code)}
+                      />
+                    </label>
+                  </div>
+                </div>
+
+                <div className="flex justify-between items-center pt-2 border-t border-slate-200 text-xs">
                   <button
+                    type="button"
                     onClick={() => {
                       // Seed initial empty manual count to let them edit/add manual items
                       setSelectedSection({
@@ -1830,11 +2078,16 @@ export default function Dashboard({ inventory, operators, onSync, setActiveTab, 
                         }
                       });
                     }}
-                    className="bg-slate-800 text-white font-bold px-3 py-1.5 rounded text-[11px]"
+                    className="bg-slate-800 hover:bg-slate-900 text-white font-bold px-3 py-1.5 rounded text-[11px] transition-colors"
                   >
                     Abrir Auditoria Manual
                   </button>
-                  <button onClick={() => handleDeleteSection(selectedSection.sectorId, selectedSection.section.code)} className="bg-rose-50 text-rose-600 font-bold px-3 py-1.5 rounded text-[11px]">
+
+                  <button
+                    type="button"
+                    onClick={() => handleDeleteSection(selectedSection.sectorId, selectedSection.section.code)}
+                    className="bg-rose-50 hover:bg-rose-100 text-rose-600 font-bold px-3 py-1.5 rounded text-[11px] transition-colors"
+                  >
                     Excluir Seção
                   </button>
                 </div>
@@ -1887,27 +2140,114 @@ export default function Dashboard({ inventory, operators, onSync, setActiveTab, 
                 )}
 
                 {/* DOUBLE COUNT "COMPARA" VIEW (Page 14/15/26 - Imagem 21/22) */}
-                {inventory.compara && selectedSection.section.contagens.length >= 2 && (
-                  <div className="border border-amber-200 bg-amber-50/50 p-2.5 rounded-lg space-y-1.5">
-                    <span className="font-bold text-amber-950 flex items-center gap-1 font-mono text-[10px]">
-                      <ShieldAlert className="w-4 h-4 text-amber-500" /> CONFERÊNCIA DE DUPLA CONTAGEM (COMPARA)
-                    </span>
-                    <div className="grid grid-cols-2 gap-2 text-[11px] font-mono">
-                      <div className="bg-white p-1.5 rounded border border-slate-200">
-                        <span className="text-slate-500 text-[10px] block font-sans">Equipe 1 ({selectedSection.section.contagens[0].operatorName}):</span>
-                        <span className="font-bold text-slate-800">
-                          {selectedSection.section.contagens[0].items.reduce((acc, it) => acc + it.quantidade, 0)} pçs
+                {inventory.compara && selectedSection.section.contagens.length >= 2 && (() => {
+                  const c1 = selectedSection.section.contagens[0];
+                  const c2 = selectedSection.section.contagens[selectedSection.section.contagens.length - 1];
+                  const tot1 = (c1.items || []).reduce((acc: number, it: any) => acc + (Number(it.quantidade) || 0), 0);
+                  const tot2 = (c2.items || []).reduce((acc: number, it: any) => acc + (Number(it.quantidade) || 0), 0);
+                  
+                  const map1: Record<string, number> = {};
+                  (c1.items || []).forEach((it: any) => {
+                    const raw = String(it.ean || it.barcode || it.codigoBarras || it.codBarras || it.sap || "").trim();
+                    const key = raw.replace(/^0+/, "") || raw || "ITEM";
+                    map1[key] = (map1[key] || 0) + Math.max(0, Number(it.quantidade) || 0);
+                  });
+                  const map2: Record<string, number> = {};
+                  (c2.items || []).forEach((it: any) => {
+                    const raw = String(it.ean || it.barcode || it.codigoBarras || it.codBarras || it.sap || "").trim();
+                    const key = raw.replace(/^0+/, "") || raw || "ITEM";
+                    map2[key] = (map2[key] || 0) + Math.max(0, Number(it.quantidade) || 0);
+                  });
+
+                  let isMatch = (tot1 === tot2 && tot1 > 0);
+                  if (isMatch) {
+                    const keys1 = Object.keys(map1);
+                    const keys2 = Object.keys(map2);
+                    if (keys1.length !== keys2.length) isMatch = false;
+                    else {
+                      for (const k of keys1) {
+                        if (map1[k] !== map2[k]) { isMatch = false; break; }
+                      }
+                    }
+                  }
+
+                  const isConferido = isMatch || selectedSection.section.status === "CONFERIDO_OK";
+
+                  return (
+                    <div className={`border p-3 rounded-lg space-y-2 ${
+                      isConferido 
+                        ? 'border-yellow-400 bg-yellow-50 text-yellow-950' 
+                        : 'border-rose-300 bg-rose-50 text-rose-950'
+                    }`}>
+                      <div className="flex items-center justify-between font-bold">
+                        <span className="flex items-center gap-1 font-mono text-[11px]">
+                          <ShieldAlert className={`w-4 h-4 ${isConferido ? 'text-yellow-600' : 'text-rose-600'}`} />
+                          CONFERÊNCIA DE DUPLA CONTAGEM (COMPARA)
+                        </span>
+                        <span className={`px-2 py-0.5 rounded text-[10px] font-black uppercase ${
+                          isConferido ? 'bg-yellow-400 text-yellow-950 border border-yellow-600' : 'bg-rose-600 text-white'
+                        }`}>
+                          {isConferido ? 'COMPARA OK (AMARELO)' : 'DIVERGENTE (VERMELHO)'}
                         </span>
                       </div>
-                      <div className="bg-white p-1.5 rounded border border-slate-200">
-                        <span className="text-slate-500 text-[10px] block font-sans">Equipe 2 ({selectedSection.section.contagens[1].operatorName}):</span>
-                        <span className="font-bold text-slate-800">
-                          {selectedSection.section.contagens[1].items.reduce((acc, it) => acc + it.quantidade, 0)} pçs
-                        </span>
+                      <div className={`grid ${selectedSection.section.contagens.length >= 3 ? 'grid-cols-3' : 'grid-cols-2'} gap-2 text-[11px] font-mono`}>
+                        <div className="bg-white p-2 rounded border border-slate-200">
+                          <span className="text-slate-500 text-[10px] block font-sans">1ª Contagem ({c1.operatorName}):</span>
+                          <span className="font-bold text-slate-800 text-sm">{tot1} pçs</span>
+                        </div>
+                        <div className="bg-white p-2 rounded border border-slate-200">
+                          <span className="text-slate-500 text-[10px] block font-sans">2ª Contagem ({c2.operatorName}):</span>
+                          <span className="font-bold text-slate-800 text-sm">{tot2} pçs</span>
+                        </div>
+                        {selectedSection.section.contagens.length >= 3 && (
+                          <div className="bg-white p-2 rounded border border-slate-200">
+                            <span className="text-slate-500 text-[10px] block font-sans">3ª Contagem ({selectedSection.section.contagens[2].operatorName}):</span>
+                            <span className="font-bold text-slate-800 text-sm">
+                              {Object.values(selectedSection.section.contagens[2].items || []).reduce((a: any, b: any) => a + (Number(b.quantidade) || 0), 0)} pçs
+                            </span>
+                          </div>
+                        )}
                       </div>
+                      
+                      {!isConferido && (
+                        <div className="flex flex-col gap-1.5 pt-1 mt-2">
+                          <span className="text-[10px] font-bold text-slate-500 text-center uppercase tracking-wide">Ações do Supervisor:</span>
+                          <div className="flex gap-2">
+                            <button
+                              onClick={() => executeForceCount1(selectedSection.sectorId, selectedSection.section.code)}
+                              className="flex-1 bg-white hover:bg-slate-100 text-slate-700 font-bold py-1.5 px-2 rounded text-[10px] font-mono border border-slate-300 shadow-sm"
+                            >
+                              APROVAR 1ª ({tot1} pçs)
+                            </button>
+                            <button
+                              onClick={() => executeForceCount2(selectedSection.sectorId, selectedSection.section.code)}
+                              className="flex-1 bg-white hover:bg-slate-100 text-slate-700 font-bold py-1.5 px-2 rounded text-[10px] font-mono border border-slate-300 shadow-sm"
+                            >
+                              APROVAR 2ª ({tot2} pçs)
+                            </button>
+                            {selectedSection.section.contagens.length >= 3 && (
+                              <button
+                                onClick={() => executeForceConferidoOk(selectedSection.sectorId, selectedSection.section.code)}
+                                className="flex-1 bg-white hover:bg-slate-100 text-slate-700 font-bold py-1.5 px-2 rounded text-[10px] font-mono border border-slate-300 shadow-sm"
+                              >
+                                APROVAR 3ª ({(selectedSection.section.contagens[2].items || []).reduce((a: any, b: any) => a + (Number(b.quantidade) || 0), 0)} pçs)
+                              </button>
+                            )}
+                          </div>
+                          
+                          {selectedSection.section.contagens.length < 3 && (
+                            <button
+                              onClick={() => executeReleaseThirdCount(selectedSection.sectorId, selectedSection.section.code)}
+                              className="w-full bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 px-2 rounded text-[10px] font-mono border border-blue-800 shadow-sm"
+                            >
+                              LIBERAR 3ª CONTAGEM (DESEMPATE)
+                            </button>
+                          )}
+                        </div>
+                      )}
                     </div>
-                  </div>
-                )}
+                  );
+                })()}
 
                 {/* Counted Items List (Imagem 17) */}
                 <div className="space-y-1.5">
@@ -1932,11 +2272,16 @@ export default function Dashboard({ inventory, operators, onSync, setActiveTab, 
                         className="flex-1 bg-white border border-slate-300 rounded px-1.5 py-1 text-xs font-mono"
                       />
                       <input
-                        type="number"
-                        min={1}
+                        type="text"
+                        inputMode="numeric"
+                        pattern="[0-9]*"
+                        placeholder="Qtd"
                         value={newItemQty}
-                        onChange={e => setNewItemQty(Math.max(1, parseInt(e.target.value) || 1))}
-                        className="w-12 bg-white border border-slate-300 rounded text-center text-xs font-mono"
+                        onChange={e => {
+                          const val = e.target.value.replace(/\D/g, "");
+                          setNewItemQty(val ? parseInt(val, 10) : 1);
+                        }}
+                        className="w-14 bg-white border border-slate-300 rounded text-center text-xs font-mono py-1 font-bold"
                       />
                       <button
                         onClick={() => handleAddManualItemToSection(selectedSection.sectorId, selectedSection.section.code)}
@@ -1973,17 +2318,28 @@ export default function Dashboard({ inventory, operators, onSync, setActiveTab, 
                                 <td className="p-1.5 text-center font-bold">
                                   <div className="flex items-center gap-1.5 justify-center">
                                     <input
-                                      type="number"
-                                      min={1}
-                                      value={displayQty || ""}
-                                      onChange={e => setTempQuantities(prev => ({ ...prev, [it.ean]: e.target.value }))}
-                                      className={`w-14 bg-white border ${isEdited ? 'border-emerald-400 ring-2 ring-emerald-50' : 'border-slate-200'} rounded text-center font-bold font-mono px-1 py-0.5 transition-all`}
+                                      type="text"
+                                      inputMode="numeric"
+                                      pattern="[0-9]*"
+                                      value={displayQty}
+                                      onChange={e => {
+                                        const numericVal = e.target.value.replace(/\D/g, "");
+                                        setTempQuantities(prev => ({ ...prev, [it.ean]: numericVal }));
+                                      }}
+                                      onKeyDown={e => {
+                                        if (e.key === "Enter") {
+                                          handleConfirmSaveQty(selectedSection.sectorId, selectedSection.section.code, it.ean);
+                                        }
+                                      }}
+                                      className={`w-14 bg-white border ${isEdited ? 'border-emerald-500 ring-2 ring-emerald-100 text-emerald-950 font-black' : 'border-slate-300 text-slate-800'} rounded text-center font-bold font-mono px-1.5 py-0.5 text-xs transition-all focus:outline-none focus:border-cyan-500`}
+                                      placeholder="0"
+                                      title="Digite a quantidade livremente (tecle Enter para salvar)"
                                     />
                                     {isEdited && (
                                       <button 
                                         onClick={() => handleConfirmSaveQty(selectedSection.sectorId, selectedSection.section.code, it.ean)}
                                         className="bg-emerald-500 text-white p-1 rounded hover:bg-emerald-600 transition-colors shadow-sm"
-                                        title="Salvar"
+                                        title="Salvar quantidade (ou Enter)"
                                       >
                                         <Check className="w-3 h-3" />
                                       </button>
@@ -2008,7 +2364,17 @@ export default function Dashboard({ inventory, operators, onSync, setActiveTab, 
                 </div>
 
                 {/* Actions line */}
-                <div className="flex gap-2 pt-2 border-t border-slate-200">
+                <div className="flex flex-wrap gap-2 pt-2 border-t border-slate-200">
+                  <label className="cursor-pointer bg-blue-50 border border-blue-200 hover:bg-blue-100 text-blue-700 font-bold py-2 px-3 rounded text-xs font-mono flex items-center justify-center gap-1.5 transition-colors">
+                    <Upload className="w-3.5 h-3.5 text-blue-600" />
+                    <span>IMPORTAR JSON</span>
+                    <input
+                      type="file"
+                      accept=".json,.txt"
+                      className="hidden"
+                      onChange={(e) => handleFileUploadToSection(e, selectedSection.sectorId, selectedSection.section.code, true)}
+                    />
+                  </label>
                   <button
                     onClick={() => handleClearSection(selectedSection.sectorId, selectedSection.section.code)}
                     className="flex-1 bg-rose-50 border border-rose-200 hover:bg-rose-100 text-rose-700 font-bold py-2 rounded text-xs font-mono"
@@ -2542,7 +2908,8 @@ export default function Dashboard({ inventory, operators, onSync, setActiveTab, 
                 <span className="font-black text-[10px] uppercase tracking-wider text-emerald-400">Área #{hoveredSection.section.code}</span>
                 <span className="font-mono text-white/50 text-[9px]">
                   {(() => {
-                    if (inventory.compara && hoveredSection.section.contagens.length > 0) {
+                    const isCompara = Boolean(Number(inventory.compara));
+                    if (isCompara && hoveredSection.section.contagens.length > 0) {
                       return hoveredSection.section.contagens[hoveredSection.section.contagens.length - 1].items.reduce((sum, it) => sum + it.quantidade, 0);
                     }
                     return hoveredSection.section.contagens.reduce((sum, c) => sum + c.items.reduce((itSum, it) => itSum + it.quantidade, 0), 0);
@@ -2749,7 +3116,10 @@ export default function Dashboard({ inventory, operators, onSync, setActiveTab, 
         isOpen={showProductsModal}
         onClose={() => setShowProductsModal(false)}
         onSync={onSync}
-        initialTab={productsModalTab}
+        onNavigateToImports={() => {
+          setShowProductsModal(false);
+          if (setActiveTab) setActiveTab("imports");
+        }}
       />
     </div>
   );

@@ -12,6 +12,17 @@ body {
   color: #0f172a;
 }
 
+/* Remove spin buttons from number inputs across all browsers */
+input[type=number]::-webkit-inner-spin-button,
+input[type=number]::-webkit-outer-spin-button {
+  -webkit-appearance: none;
+  margin: 0;
+}
+input[type=number] {
+  -moz-appearance: textfield;
+  appearance: textfield;
+}
+
 /* Custom scrollbars for sectors grid */
 ::-webkit-scrollbar {
   width: 6px;

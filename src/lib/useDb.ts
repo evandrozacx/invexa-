@@ -20,12 +20,17 @@ export function useDb() {
         fetch("/api/inventories").catch(() => null),
       ]);
 
-      const companies = compRes && compRes.ok ? await compRes.json() : [];
-      const operators = opRes && opRes.ok ? await opRes.json() : [];
-      const devices = devRes && devRes.ok ? await devRes.json() : [];
-      const inventories = invRes && invRes.ok ? await invRes.json() : [];
+      const companies = compRes && compRes.ok ? await compRes.json() : null;
+      const operators = opRes && opRes.ok ? await opRes.json() : null;
+      const devices = devRes && devRes.ok ? await devRes.json() : null;
+      const inventories = invRes && invRes.ok ? await invRes.json() : null;
 
-      setData({ companies, operators, devices, inventories });
+      setData(prev => ({
+        companies: companies !== null ? companies : prev.companies,
+        operators: operators !== null ? operators : prev.operators,
+        devices: devices !== null ? devices : prev.devices,
+        inventories: inventories !== null ? inventories : prev.inventories
+      }));
     } catch (err) {
       console.error("Error fetching data from API:", err);
     } finally {

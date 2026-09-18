@@ -1,0 +1,52 @@
+{
+  "sessionId": "sess_1789217018253_gxgjbo",
+  "baseId": "base_1789217018253",
+  "clientName": "Cliente Teste 10MB",
+  "fileName": "produtos_10mb.csv",
+  "mode": "create",
+  "checkDuplicates": true,
+  "totalExpectedItems": 100000,
+  "totalChunks": 10,
+  "receivedChunks": [
+    0,
+    1,
+    2,
+    3,
+    4,
+    5,
+    6,
+    7,
+    8,
+    9
+  ],
+  "status": "completed",
+  "createdAt": "2026-09-12T12:43:38.254Z",
+  "lastUpdated": "2026-09-12T12:43:38.671Z",
+  "result": {
+    "success": true,
+    "base": {
+      "id": "base_1789217018253",
+      "clientName": "Cliente Teste 10MB",
+      "fileName": "produtos_10mb.csv",
+      "importDate": "2026-09-12T12:43:39.003Z",
+      "lastUpdated": "2026-09-12T12:43:39.003Z",
+      "totalProducts": 100000,
+      "totalEstoque": 1050000,
+      "totalPrecoCusto": 20895000,
+      "totalDepartamentos": 5,
+      "activeColumns": {
+        "ean": true,
+        "sap": true,
+        "descricao": true,
+        "estoque": true,
+        "precoCusto": true,
+        "departamento": true
+      }
+    },
+    "mode": "create",
+    "totalProducts": 100000,
+    "newAddedCount": 100000,
+    "duplicateCount": 0
+  },
+  "completedAt": "2026-09-12T12:43:39.095Z"
+}

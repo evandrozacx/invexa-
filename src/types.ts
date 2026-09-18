@@ -33,6 +33,26 @@ export interface Product {
   departamento: string;
 }
 
+export interface SavedProductBase {
+  id: string;
+  clientName: string;
+  fileName: string;
+  importDate: string;
+  totalProducts: number;
+  totalEstoque: number;
+  totalPrecoCusto: number;
+  totalDepartamentos: number;
+  products?: Product[];
+  activeColumns?: {
+    ean: boolean;
+    sap: boolean;
+    descricao: boolean;
+    estoque: boolean;
+    precoCusto: boolean;
+    departamento: boolean;
+  };
+}
+
 export interface Address {
   codigo: string;
 }
@@ -145,6 +165,7 @@ export interface Inventory {
   addresses: Address[];
 
   // Real-time metadata summaries
+  clientBaseName?: string;
   totalProductsCount?: number;
   totalAddressesCount?: number;
   totalEstoque?: number;

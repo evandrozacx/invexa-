@@ -380,7 +380,7 @@
           "sections": [
             {
               "code": "2371",
-              "status": "CONTADO",
+              "status": "DIVERGENTE",
               "contagens": [
                 {
                   "operatorId": "op3",
@@ -397,6 +397,25 @@
                       "timestamp": "2026-07-20T04:32:00Z",
                       "operatorId": "op3",
                       "operatorName": "JOÃO HENRIQUE"
+                    }
+                  ]
+                },
+                {
+                  "operatorId": "op1",
+                  "operatorName": "OPERADOR 1",
+                  "collectorNumber": "99",
+                  "startTime": "2026-09-14T19:07:16.978Z",
+                  "endTime": "2026-09-14T19:07:16.978Z",
+                  "transmitTime": "2026-09-14T19:07:16.978Z",
+                  "items": [
+                    {
+                      "ean": "7891234567890",
+                      "sap": "",
+                      "descricao": "PRODUTO",
+                      "quantidade": 5,
+                      "timestamp": "2026-09-14T19:07:16.978Z",
+                      "operatorId": "op1",
+                      "operatorName": "OPERADOR 1"
                     }
                   ]
                 }
@@ -532,6 +551,96 @@
               "status": "NAO_INICIADO",
               "contagens": [],
               "finalizado": false
+            },
+            {
+              "code": "SIM_TEST_BUG",
+              "status": "CONFERIDO_OK",
+              "contagens": [
+                {
+                  "operatorId": "sim-1",
+                  "operatorName": "SIM 1",
+                  "collectorNumber": "99",
+                  "startTime": "2026-09-14T19:28:43.114Z",
+                  "endTime": "2026-09-14T19:28:43.114Z",
+                  "transmitTime": "2026-09-14T19:28:43.114Z",
+                  "items": [
+                    {
+                      "ean": "7891000100104",
+                      "sap": "",
+                      "descricao": "PRODUTO",
+                      "quantidade": 1,
+                      "timestamp": "2026-09-14T19:28:43.090Z",
+                      "operatorId": "sim-1",
+                      "operatorName": "SIM 1"
+                    }
+                  ]
+                },
+                {
+                  "operatorId": "sim-1",
+                  "operatorName": "SIM 1",
+                  "collectorNumber": "99",
+                  "startTime": "2026-09-14T19:28:43.139Z",
+                  "endTime": "2026-09-14T19:28:43.139Z",
+                  "transmitTime": "2026-09-14T19:28:43.139Z",
+                  "items": [
+                    {
+                      "ean": "7891000100104",
+                      "sap": "",
+                      "descricao": "PRODUTO",
+                      "quantidade": 1,
+                      "timestamp": "2026-09-14T19:28:43.122Z",
+                      "operatorId": "sim-1",
+                      "operatorName": "SIM 1"
+                    }
+                  ]
+                }
+              ],
+              "finalizado": true
+            },
+            {
+              "code": "SIM_TEST_BUG_2",
+              "status": "CONFERIDO_OK",
+              "contagens": [
+                {
+                  "operatorId": "op1",
+                  "operatorName": "OP 1",
+                  "collectorNumber": "99",
+                  "startTime": "2026-09-14T19:30:36.505Z",
+                  "endTime": "2026-09-14T19:30:36.505Z",
+                  "transmitTime": "2026-09-14T19:30:36.505Z",
+                  "items": [
+                    {
+                      "ean": "7891000100104",
+                      "sap": "",
+                      "descricao": "PRODUTO",
+                      "quantidade": 1,
+                      "timestamp": "2026-09-14T19:30:36.487Z",
+                      "operatorId": "op1",
+                      "operatorName": "OP 1"
+                    }
+                  ]
+                },
+                {
+                  "operatorId": "op2",
+                  "operatorName": "OP 2",
+                  "collectorNumber": "99",
+                  "startTime": "2026-09-14T19:30:36.533Z",
+                  "endTime": "2026-09-14T19:30:36.533Z",
+                  "transmitTime": "2026-09-14T19:30:36.533Z",
+                  "items": [
+                    {
+                      "ean": "7891000100104",
+                      "sap": "",
+                      "descricao": "PRODUTO",
+                      "quantidade": 1,
+                      "timestamp": "2026-09-14T19:30:36.526Z",
+                      "operatorId": "op2",
+                      "operatorName": "OP 2"
+                    }
+                  ]
+                }
+              ],
+              "finalizado": true
             }
           ]
         },

@@ -1,0 +1,43 @@
+{
+  "sessionId": "sess_1789216846950_b62ch4",
+  "baseId": "base_1789216846950",
+  "clientName": "TEST CLIENT",
+  "fileName": "test.txt",
+  "mode": "create",
+  "checkDuplicates": true,
+  "totalExpectedItems": 0,
+  "totalChunks": 1,
+  "receivedChunks": [
+    0
+  ],
+  "status": "completed",
+  "createdAt": "2026-09-12T12:40:46.951Z",
+  "lastUpdated": "2026-09-12T12:40:53.191Z",
+  "result": {
+    "success": true,
+    "base": {
+      "id": "base_1789216846950",
+      "clientName": "TEST CLIENT",
+      "fileName": "test.txt",
+      "importDate": "2026-09-12T12:40:53.208Z",
+      "lastUpdated": "2026-09-12T12:40:53.208Z",
+      "totalProducts": 5000,
+      "totalEstoque": 10000,
+      "totalPrecoCusto": 500000,
+      "totalDepartamentos": 1,
+      "activeColumns": {
+        "ean": true,
+        "sap": true,
+        "descricao": true,
+        "estoque": true,
+        "precoCusto": true,
+        "departamento": true
+      }
+    },
+    "mode": "create",
+    "totalProducts": 5000,
+    "newAddedCount": 5000,
+    "duplicateCount": 0
+  },
+  "completedAt": "2026-09-12T12:40:53.226Z"
+}

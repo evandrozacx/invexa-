@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useRef } from "react";
 import { Operator, Device, Inventory, Product, Address, ColetaItem, PalletCount } from "../types";
-import { Play, Check, Send, AlertTriangle, ShieldCheck, Barcode, Calendar, Layers, FileText, User, Smartphone, RefreshCw, Volume2, Lock, ArrowLeft, Search, Power, Trash2 } from "lucide-react";
+import { Play, Check, Send, AlertTriangle, ShieldCheck, Barcode, Calendar, Layers, FileText, User, Smartphone, RefreshCw, Volume2, Lock, ArrowLeft, Search, Power, Trash2, Download } from "lucide-react";
 
 
 interface Props {
@@ -387,6 +387,31 @@ export default function CollectorSimulator({ db, onSync }: Props) {
     triggerBeep("success");
   }
 
+  function handleExportSectionJson() {
+    if (!activeInventoryId || !selectedSectorId || !sectionCode) return;
+    const payload = {
+      inventoryId: activeInventoryId,
+      sectorId: selectedSectorId,
+      sectionCode: sectionCode.trim().toUpperCase(),
+      operatorId: selectedOperator,
+      operatorName: currentOperator?.nomeCompleto || "COLETOR",
+      collectorNumber: collectorNumber,
+      items: scannedItems,
+      startTime: new Date(Date.now() - 300000).toISOString(),
+      endTime: new Date().toISOString()
+    };
+    const blob = new Blob([JSON.stringify(payload, null, 2)], { type: "application/json" });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = `coleta_secao_${sectionCode.trim().toUpperCase()}_coletor_${collectorNumber}.json`;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url);
+    setSuccessMsg(`Arquivo JSON da Seção ${sectionCode} baixado com sucesso!`);
+  }
+
   async function handleTransmitSection() {
     if (!activeInventory || !selectedSectorId) return;
     setErrorMsg("");
@@ -621,7 +646,7 @@ export default function CollectorSimulator({ db, onSync }: Props) {
                 <div className="w-16 h-16 bg-cyan-500/10 border border-cyan-500/20 rounded-2xl flex items-center justify-center mx-auto mb-3">
                   <Smartphone className="w-8 h-8 text-cyan-400 animate-pulse" />
                 </div>
-                <h3 className="font-mono text-cyan-400 font-bold tracking-wider text-lg">INVEXA COLLECTOR</h3>
+                <h3 className="font-mono text-cyan-400 font-bold tracking-wider text-lg">INVEXA</h3>
                 <p className="text-xs text-slate-400 mt-1">Selecione o inventário em andamento para iniciar os trabalhos</p>
               </div>
 
@@ -1192,14 +1217,24 @@ export default function CollectorSimulator({ db, onSync }: Props) {
                     </div>
                   </div>
 
-                  {/* Send Count */}
-                  <button
-                    onClick={handleTransmitSection}
-                    disabled={scannedItems.length === 0}
-                    className="w-full bg-emerald-500 hover:bg-emerald-400 disabled:opacity-50 disabled:cursor-not-allowed transition-colors py-2 rounded text-slate-950 font-bold text-xs flex items-center justify-center gap-1 font-mono uppercase"
-                  >
-                    <Send className="w-3.5 h-3.5 fill-current" /> TRANSMITIR COLETA
-                  </button>
+                  {/* Send Count / Download JSON */}
+                  <div className="space-y-1.5">
+                    <button
+                      onClick={handleTransmitSection}
+                      disabled={scannedItems.length === 0}
+                      className="w-full bg-emerald-500 hover:bg-emerald-400 disabled:opacity-50 disabled:cursor-not-allowed transition-colors py-2 rounded text-slate-950 font-bold text-xs flex items-center justify-center gap-1 font-mono uppercase"
+                    >
+                      <Send className="w-3.5 h-3.5 fill-current" /> TRANSMITIR COLETA
+                    </button>
+                    <button
+                      onClick={handleExportSectionJson}
+                      disabled={scannedItems.length === 0}
+                      className="w-full bg-slate-800 hover:bg-slate-700 text-slate-200 disabled:opacity-50 disabled:cursor-not-allowed transition-colors py-1.5 rounded text-[11px] flex items-center justify-center gap-1 font-mono uppercase"
+                      title="Salvar arquivo JSON para importação manual no servidor"
+                    >
+                      <Download className="w-3 h-3 text-emerald-400" /> BAIXAR JSON DA SEÇÃO
+                    </button>
+                  </div>
                 </div>
               )}
             </div>
@@ -1226,7 +1261,7 @@ export default function CollectorSimulator({ db, onSync }: Props) {
 
         {/* Home Screen indicator / Back button */}
         <div className="pt-2 text-center text-[10px] text-slate-500 font-mono border-t border-slate-900">
-          Invexa Colector v2.1 • Android Simulator
+          Invexa v2.1 • Android Simulator
         </div>
       </div>
     </div>

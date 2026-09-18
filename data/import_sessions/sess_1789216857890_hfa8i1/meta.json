@@ -1,0 +1,52 @@
+{
+  "sessionId": "sess_1789216857890_hfa8i1",
+  "baseId": "base_1789216857890",
+  "clientName": "HERING TEST 100K",
+  "fileName": "hering_grande.txt",
+  "mode": "create",
+  "checkDuplicates": true,
+  "totalExpectedItems": 0,
+  "totalChunks": 1,
+  "receivedChunks": [
+    0,
+    1,
+    2,
+    3,
+    4,
+    5,
+    6,
+    7,
+    8,
+    9
+  ],
+  "status": "completed",
+  "createdAt": "2026-09-12T12:40:57.890Z",
+  "lastUpdated": "2026-09-12T12:40:58.404Z",
+  "result": {
+    "success": true,
+    "base": {
+      "id": "base_1789216857890",
+      "clientName": "HERING TEST 100K",
+      "fileName": "hering_grande.txt",
+      "importDate": "2026-09-12T12:40:58.707Z",
+      "lastUpdated": "2026-09-12T12:40:58.707Z",
+      "totalProducts": 100000,
+      "totalEstoque": 1699975,
+      "totalPrecoCusto": 67829002.5,
+      "totalDepartamentos": 2,
+      "activeColumns": {
+        "ean": true,
+        "sap": true,
+        "descricao": true,
+        "estoque": true,
+        "precoCusto": true,
+        "departamento": true
+      }
+    },
+    "mode": "create",
+    "totalProducts": 100000,
+    "newAddedCount": 100000,
+    "duplicateCount": 0
+  },
+  "completedAt": "2026-09-12T12:40:58.890Z"
+}

@@ -1,7 +1,6 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import { Inventory, Sector, Section } from "../types";
-import { CheckCircle2, AlertTriangle, Search, QrCode, RefreshCw, Smartphone, Layers, User, ArrowLeft, Hash, ShieldCheck, History, ExternalLink, Sparkles } from "lucide-react";
-
+import { CheckCircle2, AlertTriangle, Search, RefreshCw, User, ArrowLeft, Hash, ShieldCheck, Wifi, WifiOff, CloudUpload, Clock } from "lucide-react";
 
 interface Props {
   inventory: Inventory;
@@ -10,7 +9,36 @@ interface Props {
   isStandalone?: boolean;
 }
 
-export default function ShadowAuditMobile({ inventory, onSync, onBackToApp, isStandalone }: Props) {
+interface PendingShadowAudit {
+  id: string;
+  sectorId: string;
+  sectionCode: string;
+  sectorNome: string;
+  auditQuantity: number;
+  expectedQuantity: number;
+  auditorName: string;
+  createdAt: number;
+}
+
+export default function ShadowAuditMobile({ inventory: propsInventory, onSync, onBackToApp, isStandalone }: Props) {
+  const [inventory, setInventory] = useState<Inventory>(() => {
+    try {
+      const cached = localStorage.getItem(`invexa_shadow_inventory_${propsInventory.id}`);
+      return cached ? JSON.parse(cached) : propsInventory;
+    } catch (e) {
+      return propsInventory;
+    }
+  });
+
+  useEffect(() => {
+    if (propsInventory && propsInventory.id && propsInventory.sectors && propsInventory.sectors.length > 0) {
+      setInventory(propsInventory);
+      try {
+        localStorage.setItem(`invexa_shadow_inventory_${propsInventory.id}`, JSON.stringify(propsInventory));
+      } catch (e) {}
+    }
+  }, [propsInventory]);
+
   const [auditorName, setAuditorName] = useState(() => {
     return localStorage.getItem("invexa_shadow_auditor_name") || "";
   });
@@ -18,17 +46,23 @@ export default function ShadowAuditMobile({ inventory, onSync, onBackToApp, isSt
   const [selectedSectionCode, setSelectedSectionCode] = useState<string>("");
   const [auditQuantityInput, setAuditQuantityInput] = useState<string>("");
   const [submitting, setSubmitting] = useState(false);
-  const [lastResult, setLastResult] = useState<{
-    success: boolean;
-    isMatch: boolean;
-    status: string;
-    auditQuantity: number;
-    collectedQuantity: number;
-    sectorName: string;
-    sectionCode: string;
-    timestamp: string;
-  } | null>(null);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
+
+  // Cache offline de recontagens pendentes
+  const [pendingAudits, setPendingAudits] = useState<PendingShadowAudit[]>(() => {
+    try {
+      const raw = localStorage.getItem(`invexa_shadow_pending_${inventory.id}`);
+      return raw ? JSON.parse(raw) : [];
+    } catch (e) {
+      return [];
+    }
+  });
+
+  const [isOnline, setIsOnline] = useState<boolean>(() => 
+    typeof navigator !== "undefined" ? navigator.onLine : true
+  );
+  const [syncingQueue, setSyncingQueue] = useState(false);
+  const [syncFeedback, setSyncFeedback] = useState<string | null>(null);
 
   // Quick section search / filter
   const [searchSectionQuery, setSearchSectionQuery] = useState("");
@@ -36,6 +70,110 @@ export default function ShadowAuditMobile({ inventory, onSync, onBackToApp, isSt
   useEffect(() => {
     localStorage.setItem("invexa_shadow_auditor_name", auditorName);
   }, [auditorName]);
+
+  // Salva a lista de pendentes no localStorage
+  useEffect(() => {
+    try {
+      localStorage.setItem(`invexa_shadow_pending_${inventory.id}`, JSON.stringify(pendingAudits));
+    } catch (e) {
+      console.error("Erro ao salvar cache de recontagens pendentes:", e);
+    }
+  }, [pendingAudits, inventory.id]);
+
+  const syncPendingAuditsRef = useRef(handleSyncPending);
+  useEffect(() => {
+    syncPendingAuditsRef.current = handleSyncPending;
+  }, [handleSyncPending]);
+
+  // Monitora conectividade online/offline
+  useEffect(() => {
+    function handleOnline() {
+      setIsOnline(true);
+      if (syncPendingAuditsRef.current) {
+        syncPendingAuditsRef.current();
+      }
+    }
+    function handleOffline() {
+      setIsOnline(false);
+    }
+    window.addEventListener("online", handleOnline);
+    window.addEventListener("offline", handleOffline);
+    
+    // Attempt to sync on mount if online
+    if (navigator.onLine) {
+       syncPendingAuditsRef.current();
+    }
+    
+    return () => {
+      window.removeEventListener("online", handleOnline);
+      window.removeEventListener("offline", handleOffline);
+    };
+  }, []);
+
+  // Sincroniza recontagens que foram salvas no cache
+  async function handleSyncPending() {
+    if (syncingQueue || pendingAudits.length === 0) return;
+    setSyncingQueue(true);
+    setSyncFeedback(null);
+
+    const remaining: PendingShadowAudit[] = [...pendingAudits];
+    let sentCount = 0;
+
+    for (let i = 0; i < pendingAudits.length; i++) {
+      const item = pendingAudits[i];
+      try {
+        const controller = new AbortController();
+        const timeoutId = setTimeout(() => controller.abort(), 6000);
+
+        const res = await fetch(`/api/inventories/${inventory.id}/shadow-audit`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          signal: controller.signal,
+          body: JSON.stringify({
+            sectorId: item.sectorId,
+            sectionCode: item.sectionCode,
+            auditQuantity: item.auditQuantity,
+            expectedQuantity: item.expectedQuantity,
+            auditorName: item.auditorName
+          })
+        });
+        clearTimeout(timeoutId);
+
+        if (res.ok) {
+          // Sucesso: remove o item do cache de pendentes
+          const idx = remaining.findIndex(r => r.id === item.id);
+          if (idx !== -1) {
+            remaining.splice(idx, 1);
+          }
+          sentCount++;
+        } else {
+          // Servidor recusou ou deu erro: interrompe e mantém o restante no cache
+          break;
+        }
+      } catch (err) {
+        // Dispositivo ficou offline ou caiu a conexão: interrompe e mantém para reenvio
+        break;
+      }
+    }
+
+    setPendingAudits(remaining);
+    try {
+      localStorage.setItem(`invexa_shadow_pending_${inventory.id}`, JSON.stringify(remaining));
+    } catch (e) {}
+
+    if (sentCount > 0) {
+      onSync();
+    }
+
+    if (remaining.length > 0) {
+      setSyncFeedback(`${remaining.length} recontagem(ns) mantida(s) no cache para reenvio.`);
+    } else {
+      setSyncFeedback("Todas as recontagens do cache foram sincronizadas com sucesso!");
+      setTimeout(() => setSyncFeedback(null), 3500);
+    }
+
+    setSyncingQueue(false);
+  }
 
   // Combine all sections of all sectors into a single list
   interface EnhancedSection extends Section {
@@ -101,38 +239,72 @@ export default function ShadowAuditMobile({ inventory, onSync, onBackToApp, isSt
       }
     }
 
+    const currentSectorNome = allSections.find(s => s.code === selectedSectionCode && s.sectorId === selectedSectorId)?.sectorNome || "";
+    const auditQty = Number(auditQuantityInput);
+
+    // Função de contingência offline: salva no cache local e libera a próxima seção
+    const saveToLocalCache = () => {
+      const newItem: PendingShadowAudit = {
+        id: `${selectedSectorId}_${selectedSectionCode}_${Date.now()}`,
+        sectorId: selectedSectorId,
+        sectionCode: selectedSectionCode,
+        sectorNome: currentSectorNome,
+        auditQuantity: auditQty,
+        expectedQuantity,
+        auditorName: auditorName.trim() || "Auditor Sombra / Cliente",
+        createdAt: Date.now()
+      };
+      setPendingAudits(prev => {
+        const filtered = prev.filter(p => !(p.sectionCode === selectedSectionCode && p.sectorId === selectedSectorId));
+        const updated = [...filtered, newItem];
+        try {
+          localStorage.setItem(`invexa_shadow_pending_${inventory.id}`, JSON.stringify(updated));
+        } catch (e) {}
+        return updated;
+      });
+      // Libera imediatamente a próxima seção sem travar o usuário
+      setAuditQuantityInput("");
+      setSelectedSectionCode("");
+    };
+
+    // Se estiver explicitamente offline, salva no cache e libera imediatamente
+    if (!navigator.onLine) {
+      saveToLocalCache();
+      setSubmitting(false);
+      return;
+    }
+
     try {
+      const controller = new AbortController();
+      const timeoutId = setTimeout(() => controller.abort(), 6000);
+
       const res = await fetch(`/api/inventories/${inventory.id}/shadow-audit`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
+        signal: controller.signal,
         body: JSON.stringify({
           sectorId: selectedSectorId,
           sectionCode: selectedSectionCode,
-          auditQuantity: Number(auditQuantityInput),
+          auditQuantity: auditQty,
           expectedQuantity: expectedQuantity,
           auditorName: auditorName.trim() || "Auditor Sombra / Cliente"
         })
       });
+      clearTimeout(timeoutId);
 
-      const data = await res.json();
-      if (res.ok && data.success) {
-        setLastResult({
-          success: true,
-          isMatch: data.isMatch,
-          status: data.status,
-          auditQuantity: data.auditQuantity,
-          collectedQuantity: data.collectedQuantity,
-          sectorName: data.sectorName,
-          sectionCode: data.sectionCode,
-          timestamp: new Date().toLocaleTimeString()
-        });
+      if (res.ok) {
+        // Envio online bem sucedido: limpa qualquer cópia em cache dessa seção e libera a próxima
+        setPendingAudits(prev => prev.filter(p => !(p.sectionCode === selectedSectionCode && p.sectorId === selectedSectorId)));
         setAuditQuantityInput("");
+        setSelectedSectionCode(""); // Retorna para a grade imediatamente
         onSync();
       } else {
-        setErrorMessage(data.error || "Erro ao registrar recontagem.");
+        // Falha no envio: armazena no cache para reenvio e libera a próxima seção
+        saveToLocalCache();
       }
-    } catch (err) {
-      setErrorMessage("Erro de comunicação com o servidor.");
+    } catch (err: any) {
+      // Se deu timeout ou desconectou durante o envio: armazena no cache para reenvio e libera a próxima seção
+      saveToLocalCache();
     } finally {
       setSubmitting(false);
     }
@@ -162,6 +334,15 @@ export default function ShadowAuditMobile({ inventory, onSync, onBackToApp, isSt
                 <span className="bg-amber-500/20 text-amber-300 border border-amber-500/30 text-[10px] font-bold px-1.5 py-0.2 rounded-full">
                   Sombra
                 </span>
+                {/* Conexão indicador */}
+                <span className={`text-[10px] font-bold px-1.5 py-0.5 rounded-full flex items-center gap-1 border ${
+                  isOnline 
+                    ? "bg-emerald-500/10 text-emerald-400 border-emerald-500/30" 
+                    : "bg-amber-500/20 text-amber-300 border-amber-500/40"
+                }`}>
+                  {isOnline ? <Wifi className="w-3 h-3" /> : <WifiOff className="w-3 h-3" />}
+                  <span>{isOnline ? "Online" : "Offline"}</span>
+                </span>
               </div>
               <h1 className="text-base font-extrabold text-white leading-tight mt-0.5">
                 {inventory.nome}
@@ -180,6 +361,52 @@ export default function ShadowAuditMobile({ inventory, onSync, onBackToApp, isSt
             </button>
           )}
         </header>
+
+        {/* Banner de Sincronização de Cache Offline */}
+        {pendingAudits.length > 0 && (
+          <div className="bg-gradient-to-r from-blue-900/50 to-indigo-900/50 border border-blue-500/40 rounded-2xl p-3.5 shadow-lg flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
+            <div className="flex items-center gap-2.5">
+              <div className="w-8 h-8 rounded-xl bg-blue-500/20 text-blue-300 flex items-center justify-center shrink-0">
+                <Clock className="w-4 h-4" />
+              </div>
+              <div>
+                <span className="text-xs font-bold text-white block">
+                  {pendingAudits.length} {pendingAudits.length === 1 ? "recontagem no cache" : "recontagens no cache"}
+                </span>
+                <span className="text-[11px] text-blue-200">
+                  {isOnline ? "Conexão disponível para envio." : "Salvas offline. Envie quando reconectar."}
+                </span>
+              </div>
+            </div>
+
+            {isOnline && (
+              <button
+                type="button"
+                onClick={handleSyncPending}
+                disabled={syncingQueue}
+                className="w-full sm:w-auto px-3.5 py-2 bg-blue-500 hover:bg-blue-400 disabled:opacity-50 text-slate-950 text-xs font-extrabold rounded-xl shadow transition flex items-center justify-center gap-1.5 cursor-pointer shrink-0"
+              >
+                {syncingQueue ? (
+                  <>
+                    <RefreshCw className="w-3.5 h-3.5 animate-spin" />
+                    <span>Enviando...</span>
+                  </>
+                ) : (
+                  <>
+                    <CloudUpload className="w-3.5 h-3.5" />
+                    <span>Enviar Recontagens</span>
+                  </>
+                )}
+              </button>
+            )}
+          </div>
+        )}
+
+        {syncFeedback && (
+          <div className="p-2.5 bg-blue-500/10 border border-blue-500/30 rounded-xl text-xs text-blue-200 text-center font-medium">
+            {syncFeedback}
+          </div>
+        )}
 
         {/* Auditor ID input */}
         <div className="bg-slate-800/80 border border-slate-700/70 rounded-2xl p-4 space-y-2">
@@ -274,14 +501,17 @@ export default function ShadowAuditMobile({ inventory, onSync, onBackToApp, isSt
                     const isSelected = selectedSectionCode === s.code && selectedSectorId === s.sectorId;
                     const isAuditedMatch = s.shadowAudit && !s.shadowAudit.divergente;
                     const isAuditedDivergent = s.shadowAudit && s.shadowAudit.divergente;
+                    const pendingItem = pendingAudits.find(p => p.sectionCode === s.code && p.sectorId === s.sectorId);
 
                     let btnBg = "bg-slate-800 text-slate-200 border-slate-700 hover:bg-slate-700";
                     if (isSelected) {
                       btnBg = "bg-amber-500 text-slate-950 border-amber-400 font-black ring-2 ring-amber-300 shadow-md";
+                    } else if (pendingItem) {
+                      btnBg = "bg-blue-600 text-white border-blue-400 font-black";
                     } else if (isAuditedMatch) {
                       btnBg = "bg-yellow-400 text-yellow-950 border-yellow-500 font-black";
                     } else if (isAuditedDivergent) {
-                      btnBg = "bg-rose-600 text-white border-rose-700 font-black animate-pulse";
+                      btnBg = "bg-rose-600 text-white border-rose-700 font-black";
                     } else if (s.status === "CONTADO") {
                       btnBg = "bg-emerald-700/60 text-emerald-100 border-emerald-600/80";
                     }
@@ -293,18 +523,26 @@ export default function ShadowAuditMobile({ inventory, onSync, onBackToApp, isSt
                         onClick={() => {
                           setSelectedSectionCode(s.code);
                           setSelectedSectorId(s.sectorId);
-                          setAuditQuantityInput(s.shadowAudit ? String(s.shadowAudit.auditQuantity) : "");
+                          if (pendingItem) {
+                            setAuditQuantityInput(String(pendingItem.auditQuantity));
+                          } else {
+                            setAuditQuantityInput(s.shadowAudit ? String(s.shadowAudit.auditQuantity) : "");
+                          }
                           setErrorMessage(null);
                         }}
                         className={`aspect-square flex flex-col items-center justify-center p-1 rounded-lg border text-xs font-bold transition cursor-pointer ${btnBg}`}
                       >
                         <span className="leading-none text-xs sm:text-sm font-mono">{s.code}</span>
                         <span className="text-[7px] text-slate-400 opacity-80 uppercase mt-0.5 max-w-[50px] truncate">{s.sectorNome}</span>
-                        {s.shadowAudit && (
+                        {pendingItem ? (
+                          <span className="text-[8px] bg-blue-950/80 text-blue-200 px-1 rounded font-mono mt-0.5">
+                            {pendingItem.auditQuantity}pç (Cache)
+                          </span>
+                        ) : s.shadowAudit ? (
                           <span className="text-[8px] opacity-90 font-mono mt-0.5">
                             {s.shadowAudit.auditQuantity}pç
                           </span>
-                        )}
+                        ) : null}
                       </button>
                     );
                   })
@@ -372,12 +610,12 @@ export default function ShadowAuditMobile({ inventory, onSync, onBackToApp, isSt
                 {submitting ? (
                   <>
                     <RefreshCw className="w-5 h-5 animate-spin" />
-                    <span>Enviando Recontagem...</span>
+                    <span>Salvando Recontagem...</span>
                   </>
                 ) : (
                   <>
                     <CheckCircle2 className="w-5 h-5 stroke-[2.5]" />
-                    <span>Validar e Enviar para o Painel</span>
+                    <span>{isOnline ? "Salvar e Enviar Recontagem" : "Salvar no Cache (Offline)"}</span>
                   </>
                 )}
               </button>
@@ -385,56 +623,8 @@ export default function ShadowAuditMobile({ inventory, onSync, onBackToApp, isSt
           )}
         </form>
 
-        {/* Live Feedback Result Card */}
-        {lastResult && (
-          <div className={`p-4 sm:p-5 rounded-2xl border shadow-xl animate-in fade-in zoom-in-95 duration-200 ${
-            lastResult.isMatch 
-              ? "bg-yellow-400 text-yellow-950 border-yellow-500" 
-              : "bg-rose-600 text-white border-rose-700"
-          }`}>
-            <div className="flex items-start gap-3">
-              <div className={`w-10 h-10 rounded-xl flex items-center justify-center shrink-0 font-bold ${
-                lastResult.isMatch ? "bg-yellow-500/40 text-yellow-950" : "bg-rose-700 text-white"
-              }`}>
-                {lastResult.isMatch ? (
-                  <CheckCircle2 className="w-6 h-6 stroke-[3]" />
-                ) : (
-                  <AlertTriangle className="w-6 h-6 stroke-[3]" />
-                )}
-              </div>
-
-              <div className="space-y-1 flex-1">
-                <div className="flex items-center justify-between">
-                  <h3 className="font-extrabold text-sm sm:text-base uppercase tracking-tight">
-                    {lastResult.isMatch ? "✅ COMPARA OK (QUANTIDADE IDÊNTICA)" : "⚠️ DIVERGÊNCIA DETECTADA"}
-                  </h3>
-                  <span className="text-[10px] font-mono opacity-80">{lastResult.timestamp}</span>
-                </div>
-
-                <p className="text-xs font-semibold leading-snug">
-                  {lastResult.isMatch ? (
-                    <>
-                      A recontagem física de <strong>{lastResult.auditQuantity} peças</strong> na Seção <strong>{lastResult.sectionCode}</strong> confere 100% com a coleta.
-                      <span className="block mt-1 font-bold underline">
-                        O painel central foi marcado em AMARELO (Compara OK).
-                      </span>
-                    </>
-                  ) : (
-                    <>
-                      Recontagem física informou <strong>{lastResult.auditQuantity} peças</strong>, mas a equipe registrou <strong>{lastResult.collectedQuantity} peças</strong>.
-                      <span className="block mt-1 font-bold underline">
-                        O painel central foi marcado em VERMELHO para recontagem.
-                      </span>
-                    </>
-                  )}
-                </p>
-              </div>
-            </div>
-          </div>
-        )}
-
-
       </div>
     </div>
   );
 }
+

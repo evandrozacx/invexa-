@@ -4,17 +4,19 @@ import CollectorSimulator from "./components/CollectorSimulator";
 import ProductAddressImport from "./components/ProductAddressImport";
 import ReportsPanel from "./components/ReportsPanel";
 import SettingsPanel from "./components/SettingsPanel";
+import BackupRestorePanel from "./components/BackupRestorePanel";
+
 import InventoriesPanel from "./components/InventoriesPanel";
 import ShadowAuditMobile from "./components/ShadowAuditMobile";
 import { Company, Operator, Device, Inventory } from "./types";
-import { ListFilter, Smartphone, RefreshCw, Layers, Database, Shield, FileText, Settings, Sliders, LayoutGrid, RotateCcw, ShieldCheck } from "lucide-react";
+import { ListFilter, Smartphone, RefreshCw, Layers, Database, Shield, FileText, Settings, ArchiveRestore, Sliders, LayoutGrid, RotateCcw, ShieldCheck } from "lucide-react";
 import { useDb } from "./lib/useDb";
 
 
 export default function App() {
-  const { db, loading: dbLoading } = useDb();
+  const { db, loading: dbLoading, refetch } = useDb();
   
-  const [activeTab, setActiveTab] = useState<"inventories" | "dashboard" | "simulator" | "imports" | "reports" | "settings" | "sombra">(() => {
+  const [activeTab, setActiveTab] = useState<"inventories" | "dashboard" | "simulator" | "imports" | "reports" | "settings" | "sombra" | "restore">(() => {
     try {
       const saved = localStorage.getItem("invexa_active_tab");
       if (saved && ["inventories", "dashboard", "simulator", "imports", "reports", "settings", "sombra"].includes(saved)) {
@@ -25,7 +27,23 @@ export default function App() {
     }
     return "inventories";
   });
-  const [showCollectorSplit, setShowCollectorSplit] = useState(true); // Split screen for awesome interactive demo
+  const [showCollectorSplit, setShowCollectorSplit] = useState<boolean>(() => {
+    try {
+      return localStorage.getItem("invexa_show_collector") === "true";
+    } catch {
+      return false;
+    }
+  });
+
+  const toggleCollectorSplit = () => {
+    setShowCollectorSplit((prev) => {
+      const next = !prev;
+      try {
+        localStorage.setItem("invexa_show_collector", String(next));
+      } catch {}
+      return next;
+    });
+  };
 
   // Standalone Shadow Audit Link check
   const [standaloneSombraId, setStandaloneSombraId] = useState<string | null>(() => {
@@ -89,7 +107,9 @@ export default function App() {
     }
   }, [dbLoading, db.inventories]);
 
-  async function syncState() {}
+  async function syncState() {
+    await refetch();
+  }
 
   // Reset database back to default rich PDF mock values
   async function resetDatabase() {
@@ -175,7 +195,18 @@ export default function App() {
 
   // Render standalone shadow audit mobile screen directly if accessed via permanent link
   if (standaloneSombraId) {
-    const sombraInventory = (db.inventories || []).find(i => i.id === standaloneSombraId) || activeInventory;
+    let sombraInventory = (db.inventories || []).find(i => i.id === standaloneSombraId);
+    if (!sombraInventory && standaloneSombraId) {
+      try {
+        const cachedStr = localStorage.getItem(`invexa_shadow_inventory_${standaloneSombraId}`);
+        if (cachedStr) {
+          sombraInventory = JSON.parse(cachedStr);
+        }
+      } catch (e) {}
+    }
+    
+    sombraInventory = sombraInventory || activeInventory;
+
     return (
       <ShadowAuditMobile
         inventory={sombraInventory}
@@ -207,7 +238,7 @@ export default function App() {
       )}
 
       {/* 1. DESKTOP SIDEBAR NAVIGATION */}
-      <aside className="hidden lg:flex lg:w-64 bg-slate-950 border-r border-slate-800/80 flex-col justify-between text-white h-screen sticky top-0 z-30">
+      <aside className="hidden lg:flex lg:w-64 bg-[#030718] border-r border-slate-800/80 flex-col justify-between text-white h-screen sticky top-0 z-30">
         <div className="flex-1 flex flex-col py-6 px-4 space-y-6 overflow-y-auto">
           
           {/* Brand Logo */}
@@ -224,12 +255,12 @@ export default function App() {
           {/* Active Inventory Switcher in Sidebar */}
           {db.inventories.length > 0 && (
             <div className="px-1">
-              <div className="bg-slate-900/90 border border-slate-800/80 p-2.5 rounded-xl text-xs space-y-1 hover:border-slate-700 transition-colors">
-                <span className="text-slate-400 font-semibold text-[10px] uppercase tracking-wider block">Inventário Ativo</span>
+              <div className="bg-slate-900/90 border border-slate-800 p-2.5 rounded-xl text-xs space-y-1 hover:border-slate-700 transition-colors">
+                <span className="text-slate-300 font-bold text-[11px] uppercase tracking-wider block">Inventário Ativo</span>
                 <select
                   value={activeInventoryId}
                   onChange={(e) => setActiveInventoryId(e.target.value)}
-                  className="w-full bg-transparent text-indigo-300 font-bold outline-none cursor-pointer text-xs truncate"
+                  className="w-full bg-transparent text-white font-bold outline-none cursor-pointer text-sm truncate"
                 >
                   {db.inventories.map(inv => (
                     <option key={inv.id} value={inv.id} className="bg-slate-900 text-white">
@@ -242,91 +273,77 @@ export default function App() {
           )}
 
           {/* Navigation Links */}
-          <nav className="space-y-1">
-            <span className="text-[10px] font-bold text-slate-500 tracking-wider block px-2 pb-2 uppercase">Menu Principal</span>
+          <nav className="space-y-1.5">
+            <span className="text-[11px] font-bold text-slate-300 tracking-wider block px-2 pb-2 uppercase">Menu Principal</span>
             
             <button
-              onClick={() => setActiveTab("inventories")}
-              className={`w-full px-3 py-2.5 text-xs font-semibold rounded-xl transition-all flex items-center gap-3 ${
-                activeTab === "inventories" 
-                  ? "bg-indigo-600 text-white font-bold shadow-sm shadow-indigo-600/30" 
-                  : "text-slate-400 hover:text-slate-100 hover:bg-slate-900/80"
-              }`}
-            >
-              <Sliders className="w-4 h-4 shrink-0" />
-              <span>Configurar Inventários</span>
-            </button>
-
-            <button
               onClick={() => setActiveTab("dashboard")}
-              className={`w-full px-3 py-2.5 text-xs font-semibold rounded-xl transition-all flex items-center gap-3 ${
+              className={`w-full px-3.5 py-2.5 text-sm font-semibold rounded-xl transition-all flex items-center gap-3 ${
                 activeTab === "dashboard" 
                   ? "bg-indigo-600 text-white font-bold shadow-sm shadow-indigo-600/30" 
-                  : "text-slate-400 hover:text-slate-100 hover:bg-slate-900/80"
+                  : "text-white hover:text-white hover:bg-slate-900/80"
               }`}
             >
-              <LayoutGrid className="w-4 h-4 shrink-0" />
+              <LayoutGrid className="w-4 h-4 shrink-0 text-slate-300" />
               <span>Painel de Mapeamento</span>
             </button>
 
             <button
-              onClick={() => setActiveTab("imports")}
-              className={`w-full px-3 py-2.5 text-xs font-semibold rounded-xl transition-all flex items-center gap-3 ${
-                activeTab === "imports" 
+              onClick={() => setActiveTab("inventories")}
+              className={`w-full px-3.5 py-2.5 text-sm font-semibold rounded-xl transition-all flex items-center gap-3 ${
+                activeTab === "inventories" 
                   ? "bg-indigo-600 text-white font-bold shadow-sm shadow-indigo-600/30" 
-                  : "text-slate-400 hover:text-slate-100 hover:bg-slate-900/80"
+                  : "text-white hover:text-white hover:bg-slate-900/80"
               }`}
             >
-              <Database className="w-4 h-4 shrink-0" />
-              <span>Importar Bases (.CSV)</span>
+              <Sliders className="w-4 h-4 shrink-0 text-slate-300" />
+              <span>Configurar Inventários</span>
+            </button>
+
+            <button
+              onClick={() => setActiveTab("imports")}
+              className={`w-full px-3.5 py-2.5 text-sm font-semibold rounded-xl transition-all flex items-center gap-3 ${
+                activeTab === "imports" 
+                  ? "bg-indigo-600 text-white font-bold shadow-sm shadow-indigo-600/30" 
+                  : "text-white hover:text-white hover:bg-slate-900/80"
+              }`}
+            >
+              <Database className="w-4 h-4 shrink-0 text-slate-300" />
+              <span>Importar Bases</span>
             </button>
 
             <button
               onClick={() => setActiveTab("settings")}
-              className={`w-full px-3 py-2.5 text-xs font-semibold rounded-xl transition-all flex items-center gap-3 ${
+              className={`w-full px-3.5 py-2.5 text-sm font-semibold rounded-xl transition-all flex items-center gap-3 ${
                 activeTab === "settings" 
                   ? "bg-indigo-600 text-white font-bold shadow-sm shadow-indigo-600/30" 
-                  : "text-slate-400 hover:text-slate-100 hover:bg-slate-900/80"
+                  : "text-white hover:text-white hover:bg-slate-900/80"
               }`}
             >
-              <Settings className="w-4 h-4 shrink-0" />
+              <Settings className="w-4 h-4 shrink-0 text-slate-300" />
               <span>Configurações Sistema</span>
-            </button>
-            
-            <button
-              onClick={() => setActiveTab("simulator")}
-              className={`w-full px-3 py-2.5 text-xs font-semibold rounded-xl transition-all flex items-center gap-3 ${
-                activeTab === "simulator" 
-                  ? "bg-indigo-600 text-white font-bold shadow-sm shadow-indigo-600/30" 
-                  : "text-slate-400 hover:text-slate-100 hover:bg-slate-900/80"
-              }`}
-            >
-              <Smartphone className="w-4 h-4 shrink-0" />
-              <span>Simulador Terminal</span>
             </button>
 
             <button
-              onClick={() => setActiveTab("sombra")}
-              className={`w-full px-3 py-2.5 text-xs font-semibold rounded-xl transition-all flex items-center gap-3 ${
-                activeTab === "sombra" 
-                  ? "bg-amber-600 text-white font-bold shadow-sm shadow-amber-600/30" 
-                  : "text-amber-400/80 hover:text-amber-300 hover:bg-slate-900/80"
+              onClick={() => setActiveTab("restore")}
+              className={`w-full px-3.5 py-2.5 text-sm font-semibold rounded-xl transition-all flex items-center gap-3 ${
+                activeTab === "restore" 
+                  ? "bg-indigo-600 text-white font-bold shadow-sm shadow-indigo-600/30" 
+                  : "text-white hover:text-white hover:bg-slate-900/80"
               }`}
             >
-              <ShieldCheck className="w-4 h-4 shrink-0 text-amber-400" />
-              <span>Compara via Link (Sombra)</span>
+              <ArchiveRestore className="w-4 h-4 shrink-0 text-slate-300" />
+              <span>Backup e Restauração</span>
             </button>
           </nav>
+
         </div>
 
         {/* Sidebar Footer Info */}
-        <div className="p-4 border-t border-slate-900 bg-slate-950 text-[11px] text-slate-400 space-y-1">
+        <div className="p-4 border-t border-slate-900 bg-slate-950 text-[11px] text-slate-400">
           <div className="flex items-center gap-2">
             <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span>
             <span className="font-semibold text-slate-300">API Central v2.4</span>
-          </div>
-          <div className="text-[10px] text-slate-500 leading-tight">
-            PPBrasil • Mesquita • EMDS
           </div>
         </div>
       </aside>
@@ -358,7 +375,7 @@ export default function App() {
             )}
 
             <button
-              onClick={() => setShowCollectorSplit(!showCollectorSplit)}
+              onClick={toggleCollectorSplit}
               className={`p-1.5 rounded transition-all ${
                 showCollectorSplit ? "bg-cyan-500/20 text-cyan-400" : "bg-slate-800 text-slate-400"
               }`}
@@ -409,19 +426,11 @@ export default function App() {
           >
             Configuração
           </button>
-          <button
-            onClick={() => setActiveTab("simulator")}
-            className={`px-3 py-1.5 text-[11px] font-semibold tracking-wider rounded-md whitespace-nowrap ${
-              activeTab === "simulator" ? "bg-cyan-500/10 text-cyan-400 font-bold" : "text-slate-400"
-            }`}
-          >
-            Terminal
-          </button>
         </div>
       </header>
 
       {/* 3. MAIN WORKSPACE */}
-      <div className="flex-1 flex flex-col min-h-screen overflow-x-hidden">
+      <div className="flex-1 flex flex-col min-h-screen overflow-x-clip">
         
         {/* DESKTOP CONTENT HEADER */}
         <header className="hidden lg:flex bg-white border-b border-slate-200 h-16 items-center justify-between px-8 sticky top-0 z-20">
@@ -432,17 +441,15 @@ export default function App() {
               {activeTab === "imports" && "Mapeamento & Importação de Arquivos"}
               {activeTab === "reports" && "Relatórios & Resultados em Tempo Real"}
               {activeTab === "settings" && "Configurações do Sistema"}
+              {activeTab === "restore" && "Backup e Restauração"}
               {activeTab === "simulator" && "Simulador de Terminal Coletor"}
+              {activeTab === "sombra" && "Auditoria Sombra Mobile"}
             </h1>
-            <div className="h-4 w-px bg-slate-300"></div>
-            <span className="text-xs text-slate-500 font-sans">
-              Filial: <b className="font-bold text-slate-700">{activeInventory.filial}</b>
-            </span>
           </div>
 
           <div className="flex items-center gap-3">
             <button
-              onClick={() => setShowCollectorSplit(!showCollectorSplit)}
+              onClick={toggleCollectorSplit}
               className={`px-3.5 py-1.5 rounded-lg text-xs font-bold flex items-center gap-1.5 transition-all cursor-pointer border ${
                 showCollectorSplit 
                   ? "bg-blue-50 text-blue-600 border-blue-200/60 shadow-2xs" 
@@ -472,6 +479,8 @@ export default function App() {
               {activeTab === "inventories" && (
                 <InventoriesPanel
                   inventories={db.inventories}
+                  companies={db.companies}
+                  operators={db.operators}
                   activeInventoryId={activeInventoryId}
                   setActiveInventoryId={setActiveInventoryId}
                   onSync={syncState}
@@ -493,8 +502,10 @@ export default function App() {
                 <ProductAddressImport 
                   inventory={activeInventory} 
                   inventories={db.inventories}
+                  companies={db.companies}
                   setActiveInventoryId={setActiveInventoryId}
                   onSync={syncState} 
+                  setActiveTab={setActiveTab}
                 />
               )}
               {activeTab === "reports" && (
@@ -526,13 +537,30 @@ export default function App() {
                   />
                 </div>
               )}
+
+              {activeTab === "restore" && (
+                <BackupRestorePanel
+                  onSync={syncState}
+                  setActiveTab={setActiveTab}
+                />
+              )}
             </div>
+
 
             {/* SPLIT SCREEN ACTIVE SIMULATOR PANEL */}
             {showCollectorSplit && (
               <div className="hidden lg:block lg:col-span-1 space-y-4">
-                <div className="bg-blue-50/70 border border-blue-100 p-4 rounded-xl shadow-3xs space-y-2">
-                  <span className="text-[10px] font-extrabold text-blue-800 font-mono block tracking-wider uppercase">VISUALIZADOR DUPLO / API CENTRAL:</span>
+                <div className="bg-blue-50/70 border border-blue-100 p-4 rounded-xl shadow-3xs space-y-2 relative">
+                  <div className="flex items-center justify-between">
+                    <span className="text-[10px] font-extrabold text-blue-800 font-mono block tracking-wider uppercase">VISUALIZADOR DUPLO:</span>
+                    <button
+                      onClick={toggleCollectorSplit}
+                      className="text-xs font-bold text-slate-500 hover:text-rose-600 px-2 py-0.5 rounded hover:bg-white/80 transition-colors cursor-pointer border border-transparent hover:border-slate-200"
+                      title="Ocultar Coletor"
+                    >
+                      ✕ Fechar
+                    </button>
+                  </div>
                   <p className="text-[11px] text-blue-950/80 leading-relaxed font-sans">
                     Este painel simula um terminal Android real conectado à rede. Ao bipar e transmitir abaixo, a grade de mapeamento atualiza <b>imediatamente</b> na sua tela!
                   </p>
@@ -547,7 +575,7 @@ export default function App() {
         {/* FOOTER */}
         <footer className="bg-white border-t border-slate-200 text-slate-400 py-4 text-center text-[11px] font-mono mt-auto">
           <div className="max-w-7xl mx-auto px-6 flex flex-col sm:flex-row justify-between items-center gap-2">
-            <span>Invexa Web System • PPBrasil / Mesquita / EMDS</span>
+            <span>Invexa Web System</span>
             <span>Sincronizado via HTTPS • API Central v2.4</span>
           </div>
         </footer>

@@ -14,7 +14,7 @@ interface Props {
 }
 
 export default function SettingsPanel({ companies, operators, devices, inventories, activeInventoryId, setActiveInventoryId, onSync }: Props) {
-  const [activeSubTab, setActiveSubTab] = useState<"inventories" | "companies" | "operators" | "devices" | "debug">("inventories");
+  const [activeSubTab, setActiveSubTab] = useState<"companies" | "operators" | "devices" | "debug" | "inventories">("companies");
   const [debugLogs, setDebugLogs] = useState<any[]>([]);
   const [loadingLogs, setLoadingLogs] = useState(false);
   const [copiedField, setCopiedField] = useState<string | null>(null);
@@ -212,12 +212,15 @@ export default function SettingsPanel({ companies, operators, devices, inventori
 
   async function handleAddCompany(e: React.FormEvent) {
     e.preventDefault();
-    if (!cnpj || !razaoSocial || !nomeFantasia) return;
+    if (!cnpj.trim() || !razaoSocial.trim() || !nomeFantasia.trim()) {
+      setFeedback("Preencha todos os campos obrigatórios da empresa (CNPJ, Razão Social e Nome Fantasia).");
+      return;
+    }
 
     const payload = {
-      cnpj,
-      razaoSocial,
-      nomeFantasia: nomeFantasia.toUpperCase(),
+      cnpj: cnpj.trim(),
+      razaoSocial: razaoSocial.trim(),
+      nomeFantasia: nomeFantasia.toUpperCase().trim(),
       parcerias: selectedPartnerIds
     };
 
@@ -234,20 +237,53 @@ export default function SettingsPanel({ companies, operators, devices, inventori
         setNomeFantasia("");
         setSelectedPartnerIds([]);
         onSync();
+      } else {
+        const errJson = await res.json().catch(() => null);
+        setFeedback(errJson?.error ? `Erro: ${errJson.error}` : "Erro ao salvar empresa no servidor.");
       }
-    } catch (err) {
-      setFeedback("Erro ao cadastrar empresa.");
+    } catch (err: any) {
+      setFeedback(`Erro de comunicação: ${err.message || String(err)}`);
+    }
+  }
+
+  async function handleDeleteCompany(id: string) {
+    if (!window.confirm("Deseja realmente remover esta empresa do ecossistema?")) return;
+    try {
+      const res = await fetch(`/api/companies/${id}`, { method: "DELETE" });
+      if (res.ok) {
+        setFeedback("Empresa removida com sucesso!");
+        onSync();
+      } else {
+        setFeedback("Erro ao remover empresa.");
+      }
+    } catch (e) {
+      setFeedback("Erro de conexão ao remover empresa.");
     }
   }
 
   async function handleAddOperator(e: React.FormEvent) {
     e.preventDefault();
-    if (!nomeCompleto || !cpf || !operatorCompanyId) return;
+    if (!nomeCompleto.trim()) {
+      setFeedback("Por favor, digite o Nome Completo do colaborador.");
+      return;
+    }
+    if (!cpf.trim()) {
+      setFeedback("Por favor, informe o CPF do colaborador.");
+      return;
+    }
+    if (!operatorCompanyId) {
+      setFeedback("Por favor, selecione a Empresa Vinculada.");
+      return;
+    }
+
+    const cleanCpf = cpf.replace(/\D/g, "");
+    const senhaPreenchedores = cleanCpf.length >= 6 ? cleanCpf.slice(-6) : cleanCpf || "123456";
 
     const payload = {
-      nomeCompleto: nomeCompleto.toUpperCase(),
-      cpf,
-      dataNascimento,
+      nomeCompleto: nomeCompleto.toUpperCase().trim(),
+      cpf: cpf.trim(),
+      dataNascimento: dataNascimento || "",
+      senhaPreenchedores,
       companyId: operatorCompanyId,
       hierarquia: operatorHierarquia
     };
@@ -259,24 +295,45 @@ export default function SettingsPanel({ companies, operators, devices, inventori
         body: JSON.stringify(payload)
       });
       if (res.ok) {
-        setFeedback("Operador/Colaborador cadastrado!");
+        setFeedback(`Colaborador cadastrado com sucesso! Senha do coletor gerada: ${senhaPreenchedores}`);
         setNomeCompleto("");
         setCpf("");
         setDataNascimento("");
         setOperatorHierarquia("Inventariante");
         onSync();
+      } else {
+        const errJson = await res.json().catch(() => null);
+        setFeedback(errJson?.error ? `Erro: ${errJson.error}` : "Erro ao cadastrar operador no servidor.");
       }
-    } catch (err) {
-      setFeedback("Erro ao cadastrar operador.");
+    } catch (err: any) {
+      setFeedback(`Erro ao cadastrar operador: ${err.message || String(err)}`);
+    }
+  }
+
+  async function handleDeleteOperator(id: string) {
+    if (!window.confirm("Deseja realmente excluir este colaborador?")) return;
+    try {
+      const res = await fetch(`/api/operators/${id}`, { method: "DELETE" });
+      if (res.ok) {
+        setFeedback("Colaborador excluído com sucesso!");
+        onSync();
+      } else {
+        setFeedback("Erro ao excluir colaborador.");
+      }
+    } catch (e) {
+      setFeedback("Erro de conexão ao excluir colaborador.");
     }
   }
 
   async function handleAddDevice(e: React.FormEvent) {
     e.preventDefault();
-    if (!deviceName || !deviceCompanyId) return;
+    if (!deviceName.trim() || !deviceCompanyId) {
+      setFeedback("Informe o Nome do Terminal e selecione a Empresa Vinculada.");
+      return;
+    }
 
     const payload = {
-      nomeFantasia: deviceName.toUpperCase(),
+      nomeFantasia: deviceName.toUpperCase().trim(),
       companyId: deviceCompanyId,
       lastActive: new Date().toISOString()
     };
@@ -291,9 +348,11 @@ export default function SettingsPanel({ companies, operators, devices, inventori
         setFeedback("Dispositivo Terminal cadastrado com sucesso!");
         setDeviceName("");
         onSync();
+      } else {
+        setFeedback("Erro ao cadastrar terminal.");
       }
     } catch (err) {
-      setFeedback("Erro ao cadastrar terminal.");
+      setFeedback("Erro de comunicação ao cadastrar terminal.");
     }
   }
 
@@ -309,17 +368,11 @@ export default function SettingsPanel({ companies, operators, devices, inventori
     <div className="bg-white p-5 rounded-xl border border-slate-200 shadow-sm space-y-4">
       <div className="flex items-center justify-between border-b border-slate-100 pb-3">
         <div>
-          <h2 className="text-base font-bold text-slate-800">Painel de Configurações do Sistema</h2>
+          <h2 className="text-base font-bold text-slate-800">Painel de Configurações do Sistema (Build: v2.2)</h2>
           <p className="text-xs text-slate-500">Cadastre empresas parceiras, operadores coletores e terminais autorizados</p>
         </div>
         
         <div className="flex bg-slate-100 p-1 rounded-lg text-xs">
-          <button
-            onClick={() => { setActiveSubTab("inventories"); setFeedback(""); }}
-            className={`px-3 py-1.5 font-medium rounded-md transition-colors flex items-center gap-1 ${activeSubTab === "inventories" ? "bg-white text-slate-900 shadow-xs" : "text-slate-500"}`}
-          >
-            <Sliders className="w-3.5 h-3.5" /> Inventários
-          </button>
           <button
             onClick={() => { setActiveSubTab("companies"); setFeedback(""); }}
             className={`px-3 py-1.5 font-medium rounded-md transition-colors flex items-center gap-1 ${activeSubTab === "companies" ? "bg-white text-slate-900 shadow-xs" : "text-slate-500"}`}
@@ -652,7 +705,17 @@ export default function SettingsPanel({ companies, operators, devices, inventori
                 <div key={c.id} className="bg-white border border-slate-200 p-3 rounded-lg shadow-2xs space-y-1">
                   <div className="flex justify-between items-start">
                     <span className="font-bold text-slate-900 font-mono text-xs">{c.nomeFantasia}</span>
-                    <span className="bg-slate-100 text-slate-600 text-[9px] px-1.5 py-0.5 rounded font-mono">CNPJ: {c.cnpj}</span>
+                    <div className="flex items-center gap-1.5">
+                      <span className="bg-slate-100 text-slate-600 text-[9px] px-1.5 py-0.5 rounded font-mono">CNPJ: {c.cnpj}</span>
+                      <button
+                        type="button"
+                        onClick={() => handleDeleteCompany(c.id)}
+                        className="text-slate-400 hover:text-rose-600 p-1 rounded transition-colors"
+                        title="Excluir Empresa"
+                      >
+                        <Trash2 className="w-3.5 h-3.5" />
+                      </button>
+                    </div>
                   </div>
                   <p className="text-[11px] text-slate-500 truncate">{c.razaoSocial}</p>
                   
@@ -733,6 +796,7 @@ export default function SettingsPanel({ companies, operators, devices, inventori
                     <th className="p-2.5">Nível</th>
                     <th className="p-2.5">Empresa</th>
                     <th className="p-2.5 text-center">Senha Coletor</th>
+                    <th className="p-2.5 text-center">Ações</th>
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-slate-100 font-mono text-[11px] text-slate-700">
@@ -748,6 +812,16 @@ export default function SettingsPanel({ companies, operators, devices, inventori
                         {companies.find(c => c.id === o.companyId)?.nomeFantasia || "Geral"}
                       </td>
                       <td className="p-2.5 text-center text-cyan-600 font-bold bg-cyan-50/40">{o.senhaPreenchedores}</td>
+                      <td className="p-2.5 text-center">
+                        <button
+                          type="button"
+                          onClick={() => handleDeleteOperator(o.id)}
+                          className="text-slate-400 hover:text-rose-600 p-1 rounded transition-colors"
+                          title="Excluir Colaborador"
+                        >
+                          <Trash2 className="w-3.5 h-3.5" />
+                        </button>
+                      </td>
                     </tr>
                   ))}
                 </tbody>

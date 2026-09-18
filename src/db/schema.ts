@@ -1,5 +1,5 @@
 import { relations } from 'drizzle-orm';
-import { int, mysqlTable, serial, varchar, timestamp, boolean, json, double } from 'drizzle-orm/mysql-core';
+import { int, mysqlTable, serial, varchar, timestamp, boolean, json, double, text, index } from 'drizzle-orm/mysql-core';
 
 // Users table (For Firebase Auth integration)
 export const users = mysqlTable('users', {
@@ -72,6 +72,19 @@ export const inventories = mysqlTable('inventories', {
   totalEstoque: double('total_estoque').default(0),
   totalPrecoCusto: double('total_preco_custo').default(0),
   totalDepartamentos: int('total_departamentos').default(0),
+  clientBaseName: varchar('client_base_name', { length: 255 }),
+});
+
+export const importedBases = mysqlTable('imported_bases', {
+  id: varchar('id', { length: 255 }).primaryKey(),
+  clientName: varchar('client_name', { length: 255 }).notNull(),
+  fileName: varchar('file_name', { length: 255 }).notNull(),
+  importDate: varchar('import_date', { length: 255 }).notNull(),
+  totalProducts: int('total_products').default(0),
+  totalEstoque: double('total_estoque').default(0),
+  totalPrecoCusto: double('total_preco_custo').default(0),
+  totalDepartamentos: int('total_departamentos').default(0),
+  products: json('products').$type<any[]>(),
 });
 
 export const products = mysqlTable('products', {
@@ -83,13 +96,19 @@ export const products = mysqlTable('products', {
   estoque: double('estoque'),
   precoCusto: double('preco_custo'),
   departamento: varchar('departamento', { length: 255 }),
-});
+}, (table) => ({
+  inventoryIdIdx: index('idx_products_inventory_id').on(table.inventoryId),
+  eanIdx: index('idx_products_ean').on(table.ean),
+  sapIdx: index('idx_products_sap').on(table.sap),
+}));
 
 export const addresses = mysqlTable('addresses', {
   id: serial('id').primaryKey(),
   inventoryId: varchar('inventory_id', { length: 255 }).notNull(),
   codigo: varchar('codigo', { length: 255 }),
-});
+}, (table) => ({
+  inventoryIdIdx: index('idx_addresses_inventory_id').on(table.inventoryId),
+}));
 
 export const productsRelations = relations(products, ({ one }) => ({
   inventory: one(inventories, {

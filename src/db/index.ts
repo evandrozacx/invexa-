@@ -1,3 +1,4 @@
+import 'dotenv/config';
 import { drizzle } from 'drizzle-orm/mysql2';
 import mysql from 'mysql2/promise';
 import * as schema from './schema.ts';
@@ -8,6 +9,7 @@ declare global {
 
 export const createPool = () => {
   if (!global._mysqlPool) {
+    console.log(`[MySQL] Conectando a host: ${process.env.SQL_HOST || "localhost (não definido!)"}, banco: ${process.env.SQL_DB_NAME || "(não definido!)"}, usuário: ${process.env.SQL_USER || "(não definido!)"}`);
     global._mysqlPool = mysql.createPool({
       host: process.env.SQL_HOST,
       user: process.env.SQL_USER,
@@ -96,7 +98,29 @@ export async function initDatabase() {
           total_addresses_count INT DEFAULT 0,
           total_estoque DOUBLE DEFAULT 0,
           total_preco_custo DOUBLE DEFAULT 0,
-          total_departamentos INT DEFAULT 0
+          total_departamentos INT DEFAULT 0,
+          client_base_name VARCHAR(255)
+        );
+      `);
+
+      // Safe migration for existing inventories table
+      try {
+        await connection.query(`ALTER TABLE inventories ADD COLUMN client_base_name VARCHAR(255)`);
+      } catch (e) {
+        // column already exists
+      }
+
+      await connection.query(`
+        CREATE TABLE IF NOT EXISTS imported_bases (
+          id VARCHAR(255) PRIMARY KEY,
+          client_name VARCHAR(255) NOT NULL,
+          file_name VARCHAR(255) NOT NULL,
+          import_date VARCHAR(255) NOT NULL,
+          total_products INT DEFAULT 0,
+          total_estoque DOUBLE DEFAULT 0,
+          total_preco_custo DOUBLE DEFAULT 0,
+          total_departamentos INT DEFAULT 0,
+          products LONGTEXT
         );
       `);
 
@@ -121,7 +145,22 @@ export async function initDatabase() {
         );
       `);
 
-      console.log("Database tables initialized successfully (MySQL).");
+      // Safe index creation helper for fast queries and inserts on large databases
+      const safeAddIndex = async (tableName: string, indexName: string, columnsSql: string) => {
+        try {
+          await connection.query(`CREATE INDEX ${indexName} ON ${tableName} (${columnsSql})`);
+        } catch (e) {
+          // Index already exists or table structure error
+        }
+      };
+
+      await safeAddIndex("products", "idx_products_inventory_id", "inventory_id");
+      await safeAddIndex("products", "idx_products_ean", "ean(100)");
+      await safeAddIndex("products", "idx_products_sap", "sap(100)");
+      await safeAddIndex("imported_bases", "idx_imported_bases_client_name", "client_name(100)");
+      await safeAddIndex("addresses", "idx_addresses_inventory_id", "inventory_id");
+
+      console.log("Database tables and indexes initialized successfully (MySQL).");
     } finally {
       connection.release();
     }

@@ -47,6 +47,8 @@ export default function ReportsPanel({ inventory, operators, onSync }: Props) {
   const allProductivityItems: ColetaItem[] = [];
   const countedSections: { sectorName: string; code: string; status: string; opName: string; itemsCount: number; piecesCount: number }[] = [];
 
+  const isCompara = Boolean(Number(inventory.compara));
+
   inventory.sectors.forEach(sec => {
     sec.sections.forEach(s => {
       if (s.contagens && s.contagens.length > 0) {
@@ -54,7 +56,7 @@ export default function ReportsPanel({ inventory, operators, onSync }: Props) {
         s.contagens.forEach(c => {
           c.items.forEach(it => {
             allProductivityItems.push(it);
-            if (!inventory.compara || c === validContagemForPieces) {
+            if (!isCompara || c === validContagemForPieces) {
               allCollectedItems.push(it);
             }
           });
@@ -242,7 +244,10 @@ export default function ReportsPanel({ inventory, operators, onSync }: Props) {
       inventory.sectors.forEach(sec => {
         sec.sections.forEach(s => {
           const sums: { [ean: string]: number } = {};
+          const isCompara = Boolean(Number(inventory.compara));
+          const validContagem = isCompara && s.contagens.length > 0 ? s.contagens[s.contagens.length - 1] : null;
           s.contagens.forEach(c => {
+            if (isCompara && c !== validContagem) return;
             c.items.forEach(it => {
               sums[it.ean] = (sums[it.ean] || 0) + it.quantidade;
             });
@@ -259,7 +264,10 @@ export default function ReportsPanel({ inventory, operators, onSync }: Props) {
       const sums: { [key: string]: { ean: string; sector: string; qty: number } } = {};
       inventory.sectors.forEach(sec => {
         sec.sections.forEach(s => {
+          const isCompara = Boolean(Number(inventory.compara));
+          const validContagem = isCompara && s.contagens.length > 0 ? s.contagens[s.contagens.length - 1] : null;
           s.contagens.forEach(c => {
+            if (isCompara && c !== validContagem) return;
             c.items.forEach(it => {
               const k = `${sec.nome}_${it.ean}`;
               if (!sums[k]) {
@@ -297,7 +305,10 @@ export default function ReportsPanel({ inventory, operators, onSync }: Props) {
 
     inventory.sectors.forEach(sec => {
       sec.sections.forEach(s => {
+        const isCompara = Boolean(Number(inventory.compara));
+        const validContagem = isCompara && s.contagens.length > 0 ? s.contagens[s.contagens.length - 1] : null;
         s.contagens.forEach(c => {
+          if (isCompara && c !== validContagem) return;
           c.items.forEach(it => {
             const row = [
               inventory.id,
@@ -808,9 +819,8 @@ export default function ReportsPanel({ inventory, operators, onSync }: Props) {
           <div className="bg-white border-2 border-slate-300 p-6 rounded-lg font-sans max-w-4xl mx-auto shadow-sm space-y-6 text-slate-900" id="print-area">
             {/* Logo and title */}
             <div className="flex justify-between items-start border-b-2 border-slate-900 pb-4">
-              <div className="font-mono text-xl font-black tracking-tighter text-slate-900 flex items-center gap-1">
-                <span className="bg-slate-900 text-white px-2.5 py-1 rounded">IS</span>
-                <span>COLLECTOR</span>
+              <div className="font-mono text-xl font-black tracking-tighter text-slate-900 flex items-center gap-1.5">
+                <span className="bg-blue-600 text-white px-3 py-1 rounded font-bold tracking-wider">INVEXA</span>
               </div>
               <div className="text-right">
                 <h1 className="text-md font-bold tracking-tight text-slate-950 font-mono">Inventário: {inventory.nome}</h1>
